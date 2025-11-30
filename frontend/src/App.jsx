@@ -25,15 +25,14 @@ const App = () => {
       <Routes>
         {/* ----- KHÔNG CẦN ĐĂNG NHẬP ----- */}
         <Route path="/login" element={<Login />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* ----- CẦN ĐĂNG NHẬP ----- */}
         <Route element={<PrivateRoute />}>
           <Route element={<MainLayout />}>
-
             {/* CHUNG */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* STAFF + MANAGER + ADMIN */}
             <Route
@@ -42,10 +41,10 @@ const App = () => {
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/pos" element={<POS />} />
               <Route path="/products" element={<Product />} />
-              <Route path="/warehouses" element={<Warehouse />} />
+              <Route path="/pos" element={<POS />} />
               <Route path="/customers" element={<Customer />} />
+              <Route path="/warehouses" element={<Warehouse />} />
             </Route>
 
             {/* MANAGER + ADMIN */}
@@ -54,13 +53,13 @@ const App = () => {
             >
               <Route path="/suppliers" element={<Supplier />} />
               <Route path="/promotions" element={<Promotion />} />
-              <Route path="/reports" element={<Report />} />
               <Route path="/staff" element={<Staff />} />
+              <Route path="/reports" element={<Report />} />
             </Route>
 
             {/* ADMIN */}
             <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
-              <Route path="/finance" element={<Finance />} />
+              <Route path="/finances" element={<Finance />} />
               <Route path="/settings" element={<Setting />} />
             </Route>
           </Route>

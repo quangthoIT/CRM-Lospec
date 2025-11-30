@@ -14,40 +14,104 @@ import {
   BarChart3,
   UserCog,
 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const menuItems = [
-  { icon: LayoutDashboard, name: "Tổng quan" },
-  { icon: Box, name: "Sản phẩm" },
-  { icon: ShoppingCart, name: "Bán hàng" },
-  { icon: Users, name: "Khách hàng" },
-  { icon: Warehouse, name: "Kho hàng" },
-  { icon: Truck, name: "Nhà cung cấp" },
-  { icon: Megaphone, name: "Khuyến mãi & Marketing" },
-  { icon: UserCog, name: "Nhân viên & Phân quyền" },
-  { icon: BarChart3, name: "Báo cáo & Phân tích" },
-  { icon: Wallet, name: "Tài chính & Kế toán" },
-  { icon: Settings, name: "Hệ thống & Cài đặt" },
+  {
+    icon: LayoutDashboard,
+    name: "Tổng quan",
+    path: "/dashboard",
+    roles: ["staff", "manager", "admin"],
+  },
+  {
+    icon: Box,
+    name: "Sản phẩm",
+    path: "/products",
+    roles: ["staff", "manager", "admin"],
+  },
+  {
+    icon: ShoppingCart,
+    name: "Bán hàng",
+    path: "/pos",
+    roles: ["staff", "manager", "admin"],
+  },
+  {
+    icon: Users,
+    name: "Khách hàng",
+    path: "/customers",
+    roles: ["staff", "manager", "admin"],
+  },
+  {
+    icon: Warehouse,
+    name: "Kho hàng",
+    path: "/warehouses",
+    roles: ["staff", "manager", "admin"],
+  },
+  {
+    icon: Truck,
+    name: "Nhà cung cấp",
+    path: "/suppliers",
+    roles: ["manager", "admin"],
+  },
+  {
+    icon: Megaphone,
+    name: "Khuyến mãi & Marketing",
+    path: "/promotions",
+    roles: ["manager", "admin"],
+  },
+  {
+    icon: UserCog,
+    name: "Nhân viên & Phân quyền",
+    path: "/staff",
+    roles: ["manager", "admin"],
+  },
+  {
+    icon: BarChart3,
+    name: "Báo cáo & Phân tích",
+    path: "/reports",
+    roles: ["manager", "admin"],
+  },
+  {
+    icon: Wallet,
+    name: "Tài chính & Kế toán",
+    path: "/finances",
+    roles: ["admin"],
+  },
+  {
+    icon: Settings,
+    name: "Hệ thống & Cài đặt",
+    path: "/settings",
+    roles: ["admin"],
+  },
 ];
 
 const Sidebar = () => {
-  const [activeItem, setActiveItem] = useState("Tổng quan");
-  const onItemClick = (name) => {
-    setActiveItem(name);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { userProfile } = useAuth();
+
+  const handleItemClick = (path) => {
+    navigate(path);
   };
+
+  const filteredMenuItems = menuItems.filter((item) =>
+    item.roles.includes(userProfile?.role)
+  );
 
   return (
     <div className="h-full flex flex-col">
       {/* Menu Items */}
       <nav className="flex-1 overflow-y-auto p-4">
         <div className="space-y-2">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeItem === item.name;
+            const isActive = location.pathname === item.path;
 
             return (
               <button
                 key={item.name}
-                onClick={() => onItemClick(item.name)}
+                onClick={() => handleItemClick(item.path)}
                 className={`
                   w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors
                   ${

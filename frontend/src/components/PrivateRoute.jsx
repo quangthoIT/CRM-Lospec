@@ -1,29 +1,46 @@
-// components/PrivateRoute.jsx
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const PrivateRoute = ({ allowedRoles }) => {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
 
+  // Đang loading
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
       </div>
     );
   }
 
-  // Chưa đăng nhập - Về login
+  // Chưa đăng nhập
   if (!user) {
+    console.log("Không có người dùng, đang chuyển hướng đến /đăng nhập");
     return <Navigate to="/login" replace />;
   }
 
-  // Đã đăng nhập nhưng Role không nằm trong danh sách cho phép - Về 403 hoặc Home
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  // Đã đăng nhập nhưng chưa có profile (backend chưa trả về)
+  if (!userProfile) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
+
+  // Kiểm tra quyền truy cập
+  if (allowedRoles && !allowedRoles.includes(userProfile.role)) {
+    console.log("Chỉ cho phép quyền truy cập: ", allowedRoles);
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Hợp lệ - Cho đi qua
+  // Kiểm tra tài khoản có bị vô hiệu hóa không
+  if (userProfile.is_active === false) {
+    console.log("Tài khoản người dùng không hoạt động.");
+    return <Navigate to="/unauthorized" replace />;
+  }
+
   return <Outlet />;
 };
 
