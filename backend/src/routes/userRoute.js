@@ -7,23 +7,31 @@ import {
   deleteUser,
   createUserEntry,
 } from "../controllers/userController.js";
+import { login, register } from "../controllers/authController.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { checkRole } from "../middleware/role.js";
 
 const userRouter = express.Router();
 
+//  Routes công khai
+userRouter.post("/login", login);
+userRouter.post("/register", register);
+
+// Routes cần xác thực
 userRouter.use(authMiddleware);
 
-// CRoute chính
+// Routes lấy thông tin bản thân
 userRouter.get("/me", getCurrentUser);
 
-// Các route quản lý chung
+// Routes cần quyền Admin/Manager
 userRouter.get("/", checkRole(["admin", "manager"]), getAllUsers);
+
+// Routes Admin quản lý User
 userRouter.post("/", checkRole(["admin"]), createUserEntry);
+userRouter.delete("/:id", checkRole(["admin"]), deleteUser);
 
 // Các route có tham số :id
-userRouter.get("/:id", getUserById); // Ai cũng xem được
-userRouter.put("/:id", updateUser); // Logic check role admin
-userRouter.delete("/:id", checkRole(["admin"]), deleteUser); // Admin mới xóa được
+userRouter.get("/:id", getUserById);
+userRouter.put("/:id", updateUser);
 
 export default userRouter;

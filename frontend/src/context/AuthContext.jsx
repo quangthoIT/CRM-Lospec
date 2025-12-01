@@ -1,142 +1,103 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "../config/supabase";
-import { userService } from "../services/userService";
+import api from "../config/api";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user profile từ backend API
-  const fetchUserProfile = async () => {
+  // --- Load user từ Token khi F5 trang ---
+  const loadUser = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const profile = await userService.getCurrentUser();
-      return profile;
+      // Gọi endpoint: GET /api/users/me
+      const { data } = await api.get("/users/me");
+      setUser(data);
     } catch (error) {
-      console.error(
-        "Lỗi tìm nạp hồ sơ người dùng:",
-        error.response?.data || error.message
-      );
-      return null;
+      console.error("Load user failed:", error);
+      localStorage.removeItem("token");
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    let mounted = true;
-    let isInitializing = true;
-
-    const initAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (mounted && session?.user) {
-          setUser(session.user);
-
-          const profile = await fetchUserProfile();
-          if (profile) {
-            setUserProfile(profile);
-          } else {
-            console.warn("Không thể tìm nạp hồ sơ");
-            // Không logout, chỉ set user mà không có profile
-            // Để PrivateRoute xử lý
-          }
-        }
-      } catch (error) {
-        console.error("Lỗi xác thực khởi tạo:", error);
-      } finally {
-        if (mounted) {
-          isInitializing = false;
-          console.log("Xác thực khởi tạo hoàn tất.");
-          setLoading(false);
-        }
-      }
-    };
-
-    initAuth();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-
-      // Bỏ qua event trong quá trình khởi tạo
-      if (isInitializing) {
-        return;
-      }
-
-      if (!mounted) return;
-
-      if (session?.user) {
-        setUser(session.user);
-        const profile = await fetchUserProfile();
-        setUserProfile(profile);
-      } else {
-        setUser(null);
-        setUserProfile(null);
-      }
-
-      setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    loadUser();
   }, []);
 
-  // Hàm đăng nhập
+  // --- Đăng Nhập ---
   const login = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Endpoint: POST /api/users/login
+      const { data } = await api.post("/users/login", { email, password });
 
-      if (error) throw error;
+      // Backend trả về: { token, user }
+      localStorage.setItem("token", data.token);
+      setUser(data.user);
 
-      // Không cần fetch profile ở đây vì onAuthStateChange sẽ tự động fetch
+      return data.user;
+    } catch (error) {
+      // Ném lỗi ra để Component Login hiển thị thông báo
+      const message = error.response?.data?.message || "Đăng nhập thất bại";
+      throw new Error(message);
+    }
+  };
+
+  // --- Đăng Ký ---
+  const register = async (payload) => {
+    try {
+      // Endpoint: POST /api/users/register
+      const { data } = await api.post("/users/register", payload);
+
+      // Backend trả về: { message, token, user }
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        setUser(data.user);
+      }
       return data;
     } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
-      throw error;
+      const message = error.response?.data?.message || "Đăng ký thất bại";
+      throw new Error(message);
     }
   };
 
-  // Hàm đăng xuất
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      setUser(null);
-      setUserProfile(null);
-    } catch (error) {
-      console.error("Lỗi đăng xuất:", error);
-      throw error;
-    }
+  // --- Đăng Xuất ---
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    window.location.href = "/login";
   };
 
-  // Hàm refresh profile (dùng sau khi update)
+  // --- Refresh data ---
   const refreshProfile = async () => {
-    const profile = await fetchUserProfile();
-    setUserProfile(profile);
-    return profile;
+    try {
+      const { data } = await api.get("/users/me");
+      setUser(data);
+    } catch (error) {
+      console.error("Refresh profile error", error);
+    }
   };
 
   const value = {
     user,
-    userProfile,
+    userProfile: user,
     loading,
     login,
+    register,
     logout,
     refreshProfile,
-    isAdmin: userProfile?.role === "admin",
-    isManager: userProfile?.role === "manager",
-    isStaff: userProfile?.role === "staff",
+    // Helper check quyền nhanh
+    isAdmin: user?.role === "admin",
+    isManager: user?.role === "manager",
+    isStaff: user?.role === "staff",
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,48 +1,40 @@
-import { supabase } from "../config/database.js";
+import jwt from "jsonwebtoken";
+import { pool } from "../config/database.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    // Lấy token từ header Authorization (Bearer <token>)
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res
         .status(401)
-        .json({ message: "Access denied. No token provided." });
+        .json({ message: "Truy cập bị từ chối. Vui lòng đăng nhập." });
     }
 
-    // Xác thực token với Supabase Auth
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (error || !user)
+    const result = await pool.query("SELECT * FROM users WHERE id=$1", [
+      decoded.id,
+    ]);
+
+    const user = result.rows[0];
+
+    if (!user) {
       return res
         .status(401)
-        .json({ message: "Invalid token or user not found." });
-
-    // Lấy thông tin chi tiết từ bảng users
-    const { data: userData, error: dbError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (dbError || !userData) {
-      return res
-        .status(401)
-        .json({ message: "Invalid token or user not found." });
+        .json({ message: "Token không hợp lệ hoặc người dùng không tồn tại." });
     }
 
-    if (!userData.is_active) {
-      return res.status(401).json({ message: "User is not active." });
+    if (!user.is_active) {
+      return res.status(401).json({ message: "Tài khoản đã bị khóa." });
     }
-    // Gán thông tin user vào request
-    req.user = userData;
+
+    delete user.password; // Xóa password hash
+
+    req.user = user;
     next();
   } catch (err) {
     console.error("Auth Middleware Error:", err);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(403).json({ message: "Token không hợp lệ." });
   }
 };
