@@ -30,7 +30,7 @@ function Input({ className, type, icon, label, id, ...props }) {
           data-slot="input"
           className={cn(
             "file:text-foreground placeholder:text-gray-400 border border-gray-300 h-9 w-full min-w-0 rounded-md bg-gray-50 px-3 py-1 text-base shadow-sm transition-color outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-            "focus-visible:border-emerald-200 focus-visible:ring-emerald-600 focus-visible:ring-[1px]",
+            "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500",
             "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
             icon ? "pl-10 pr-3" : "px-4",
             className
