@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
-import { WarehouseTransactionDialog } from "../WarehouseTransactionDialog";
-import { WarehouseDetailDialog } from "../WarehouseDetailDialog";
-import { WarehouseTable } from "../WarehouseTable";
+import { WarehouseTransactionDialog } from "./WarehouseTransactionDialog";
+import { WarehouseDetailDialog } from "./WarehouseDetailDialog";
+import { WarehouseTable } from "./WarehouseTable";
 
 export function ImportWarehouseView() {
   const [invoices, setInvoices] = useState([]);
