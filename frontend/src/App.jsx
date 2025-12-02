@@ -17,6 +17,7 @@ import Staff from "./pages/Staff";
 import Finance from "./pages/Finance";
 import Setting from "./pages/Setting";
 import { Toaster } from "sonner";
+import Attendance from "./pages/Attendance";
 
 const App = () => {
   return (
@@ -44,7 +45,8 @@ const App = () => {
               <Route path="/products" element={<Product />} />
               <Route path="/pos" element={<POS />} />
               <Route path="/customers" element={<Customer />} />
-              <Route path="/warehouses" element={<Warehouse />} />
+              <Route path="/warehouses" element={<Warehouse />} />"
+              <Route path="/attendance" element={<Attendance />} />
             </Route>
 
             {/* MANAGER + ADMIN */}

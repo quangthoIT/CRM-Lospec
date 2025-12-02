@@ -1,37 +1,52 @@
 import express from "express";
 import {
   getAllUsers,
-  getUserById,
-  getCurrentUser,
+  createUserEntry,
   updateUser,
   deleteUser,
-  createUserEntry,
+  getCurrentUser,
+  getUserById,
 } from "../controllers/userController.js";
-import { login, register } from "../controllers/authController.js";
+import {
+  checkIn,
+  checkOut,
+  getMyAttendance,
+  getAllAttendance,
+} from "../controllers/attendanceController.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { checkRole } from "../middleware/role.js";
+import { login, register } from "../controllers/authController.js";
 
 const userRouter = express.Router();
 
-//  Routes công khai
+// --- CÔNG KHAI ---
 userRouter.post("/login", login);
 userRouter.post("/register", register);
 
-// Routes cần xác thực
 userRouter.use(authMiddleware);
 
-// Routes lấy thông tin bản thân
+// --- CÁ NHÂN ---
 userRouter.get("/me", getCurrentUser);
+userRouter.post("/attendance/check-in", checkIn);
+userRouter.post("/attendance/check-out", checkOut);
+userRouter.get("/attendance/my-history", getMyAttendance);
 
-// Routes cần quyền Admin/Manager
+// --- QUẢN LÝ ---
+// Chỉ Admin hoặc Manager mới xem được danh sách nhân viên
 userRouter.get("/", checkRole(["admin", "manager"]), getAllUsers);
 
-// Routes Admin quản lý User
+// Chỉ Admin mới được Thêm/Sửa/Xóa nhân viên
 userRouter.post("/", checkRole(["admin"]), createUserEntry);
+userRouter.put("/:id", checkRole(["admin"]), updateUser);
 userRouter.delete("/:id", checkRole(["admin"]), deleteUser);
 
-// Các route có tham số :id
+// Quản lý xem chấm công toàn bộ
+userRouter.get(
+  "/attendance/all",
+  checkRole(["admin", "manager"]),
+  getAllAttendance
+);
+
 userRouter.get("/:id", getUserById);
-userRouter.put("/:id", updateUser);
 
 export default userRouter;

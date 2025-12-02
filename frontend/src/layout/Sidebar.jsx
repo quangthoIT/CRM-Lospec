@@ -13,6 +13,7 @@ import {
   Wallet,
   BarChart3,
   UserCog,
+  Clock,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -59,6 +60,12 @@ const menuItems = [
     name: "Khuyến mãi & Marketing",
     path: "/promotions",
     roles: ["manager", "admin"],
+  },
+  {
+    icon: Clock,
+    name: "Chấm công",
+    path: "/attendance",
+    roles: ["staff", "manager", "admin"],
   },
   {
     icon: UserCog,
