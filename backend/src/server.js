@@ -5,6 +5,8 @@ import userRouter from "./routes/userRoute.js";
 import productRouter from "./routes/productRoute.js";
 import supplierRouter from "./routes/supplierRoute.js";
 import warehouseRouter from "./routes/warehouseRoute.js";
+import customerRouter from "./routes/customerRoute.js";
+import orderRouter from "./routes/orderRoute.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 3001;
@@ -21,6 +23,8 @@ app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
 app.use("/api/suppliers", supplierRouter);
 app.use("/api/warehouse", warehouseRouter);
+app.use("/api/customers", customerRouter);
+app.use("/api/orders", orderRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
