@@ -29,14 +29,10 @@ const Attendance = () => {
   const [activeTab, setActiveTab] = useState("my-attendance");
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">
-          Chấm công & Điểm danh
-        </h1>
-        <p className="text-sm text-gray-500">
-          Quản lý giờ làm việc và lịch sử ra vào
-        </p>
+    <div className="mx-auto">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">Chấm công</h1>
+        <p className="text-gray-600">Quản lý giờ làm việc và lịch sử ra vào</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

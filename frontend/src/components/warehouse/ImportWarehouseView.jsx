@@ -2,11 +2,19 @@ import { useState, useEffect } from "react";
 import api from "../../config/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, RefreshCw, Search } from "lucide-react";
+import {
+  Plus,
+  RefreshCw,
+  Truck,
+  Search,
+  CheckCircle,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { WarehouseTransactionDialog } from "./WarehouseTransactionDialog";
 import { WarehouseDetailDialog } from "./WarehouseDetailDialog";
 import { WarehouseTable } from "./WarehouseTable";
+import { ConfirmActionDialog } from "../ConfirmActionDialog";
 
 export function ImportWarehouseView() {
   const [invoices, setInvoices] = useState([]);
@@ -15,11 +23,21 @@ export function ImportWarehouseView() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // State Dialog Tạo mới
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // States xem chi tiết
+  // State Dialog Chi tiết
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  // State Dialog Xác nhận Duyệt
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
+
+  // State Dialog Xác nhận Xóa
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -44,6 +62,7 @@ export function ImportWarehouseView() {
     }
   };
 
+  // Xem chi tiết phiếu
   const handleViewDetail = async (invoiceId) => {
     setDetailOpen(true);
     setSelectedInvoice(null);
@@ -56,6 +75,59 @@ export function ImportWarehouseView() {
     }
   };
 
+  // --- LOGIC DUYỆT PHIẾU ---
+  const handleOpenApprove = () => {
+    setApproveOpen(true);
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!selectedInvoice) return;
+    setApproving(true);
+    try {
+      await api.put(`/warehouse/purchase-orders/${selectedInvoice.id}/approve`);
+      toast.success("Đã duyệt phiếu và nhập kho thành công!");
+      setApproveOpen(false);
+      setDetailOpen(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi duyệt phiếu");
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  // --- LOGIC XÓA PHIẾU ---
+  // Xử lý khi bấm nút xóa ở bảng
+  const handleDeleteFromTable = (item) => {
+    setItemToDelete(item);
+    setDeleteOpen(true);
+  };
+
+  // Xử lý khi bấm nút xóa trong dialog chi tiết
+  const handleDeleteFromDetail = () => {
+    setItemToDelete(selectedInvoice);
+    setDeleteOpen(true);
+  };
+
+  // Gọi API xóa
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/warehouse/purchase-orders/${itemToDelete.id}`);
+      toast.success("Đã xóa phiếu nhập nháp!");
+
+      setDeleteOpen(false);
+      setDetailOpen(false);
+      setItemToDelete(null);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi xóa phiếu");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const filteredInvoices = invoices.filter(
     (inv) =>
       inv.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,9 +137,11 @@ export function ImportWarehouseView() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Lịch sửa nhập kho</h2>
-          <p className="text-gray-600 text-sm">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            Quản lý nhập kho
+          </h2>
+          <p className="text-sm text-gray-500">
             Quản lý các phiếu nhập hàng từ nhà cung cấp
           </p>
         </div>
@@ -95,9 +169,10 @@ export function ImportWarehouseView() {
         loading={loading}
         type="import"
         onViewDetail={handleViewDetail}
+        onDelete={handleDeleteFromTable}
       />
 
-      {/* Create Dialog */}
+      {/* Dialog Tạo Mới */}
       <WarehouseTransactionDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -107,12 +182,54 @@ export function ImportWarehouseView() {
         onSuccess={fetchData}
       />
 
-      {/* ✅ Detail Dialog (Dùng chung) */}
+      {/* Dialog Chi Tiết */}
       <WarehouseDetailDialog
         open={detailOpen}
         onOpenChange={setDetailOpen}
         data={selectedInvoice}
         type="import"
+        footerAction={
+          // Chỉ hiện nút thao tác nếu trạng thái chưa hoàn thành (pending)
+          selectedInvoice?.status !== "received" ? (
+            //  Nút Xóa trong Dialog Chi tiết
+            // <Button
+            //   variant="destructive"
+            //   onClick={handleDeleteFromDetail}
+            //   className="gap-2"
+            // >
+            //   <Trash2 className="h-4 w-4" /> Xóa phiếu
+            // </Button>
+
+            <Button onClick={handleOpenApprove} variant="default">
+              <CheckCircle className="h-4 w-4" /> Duyệt & Nhập kho
+            </Button>
+          ) : null
+        }
+      />
+
+      {/* Dialog Xác Nhận Duyệt */}
+      <ConfirmActionDialog
+        open={approveOpen}
+        onOpenChange={setApproveOpen}
+        onConfirm={handleConfirmApprove}
+        loading={approving}
+        title="Xác nhận nhập kho?"
+        description={`Hệ thống sẽ cộng tồn kho cho các sản phẩm trong phiếu ${selectedInvoice?.po_number}. Hành động này không thể hoàn tác.`}
+        confirmText="Xác nhận Nhập"
+      />
+
+      {/* ✅ Dialog Xác Nhận Xóa (Mới thêm) */}
+      <ConfirmActionDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+        title="Xóa phiếu nhập?"
+        description={`Bạn có chắc chắn muốn xóa phiếu nhập nháp ${
+          itemToDelete?.po_number || selectedInvoice?.po_number
+        }?`}
+        confirmText="Xóa phiếu"
+        variant="destructive"
       />
     </div>
   );

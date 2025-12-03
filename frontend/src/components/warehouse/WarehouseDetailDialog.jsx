@@ -20,7 +20,7 @@ export function WarehouseDetailDialog({
   onOpenChange,
   data,
   type = "import", // "import" | "export"
-  footerAction, // Prop để nhận nút bấm (ví dụ nút Duyệt) từ cha nếu cần
+  footerAction,
 }) {
   if (!data) return null;
 
@@ -41,14 +41,14 @@ export function WarehouseDetailDialog({
   const displayData = {
     code: isImport ? data.po_number : data.code,
     date: isImport ? data.actual_delivery || data.created_at : data.date,
-    partnerLabel: isImport ? "Nhà cung cấp" : "Lý do / Ghi chú",
+    partnerLabel: isImport ? "Nhà cung cấp" : "Địa điểm",
     partnerValue: isImport ? data.supplier_name : data.notes,
     items: data.items || [],
     totalQuantity: isImport
       ? (data.items || []).reduce((sum, i) => sum + i.quantity, 0)
       : data.totalQuantity,
-    totalAmount: isImport ? data.total : data.totalValue,
-    creator: isImport ? data.created_by : null, // Export hiện tại chưa lưu creator trong view này
+    totalAmount: isImport ? data.total : data.total,
+    creator: isImport ? data.created_by : data.created_by,
   };
 
   return (
@@ -65,28 +65,26 @@ export function WarehouseDetailDialog({
 
         <div className="space-y-6">
           {/* --- Thông tin Header --- */}
-          <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded border">
+          <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded border">
             <div>
-              <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
                 {isImport ? (
                   <User className="h-3 w-3" />
                 ) : (
-                  <FileText className="h-3 w-3" />
+                  <MapPin className="h-3 w-3" />
                 )}
                 {displayData.partnerLabel}
               </p>
-              <p className="font-medium text-slate-800 wrap-break-word">
-                {displayData.partnerValue || "---"}
-              </p>
+              <p className="font-medium text-gray-900 text-sm">Kho tổng</p>
             </div>
 
             {/* Nếu là Import thì hiển thị Ghi chú riêng, Export thì ghi chú đã nằm ở partnerValue */}
             {isImport && (
               <div>
-                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
                   <FileText className="h-3 w-3" /> Ghi chú
                 </p>
-                <p className="font-medium text-slate-800">
+                <p className="font-medium text-gray-900 text-sm">
                   {data.notes || "Không có"}
                 </p>
               </div>
@@ -94,10 +92,12 @@ export function WarehouseDetailDialog({
 
             {!isImport && (
               <div>
-                <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> Địa điểm
+                <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
+                  <FileText className="h-3 w-3" /> Ghi chú
                 </p>
-                <p className="font-medium text-slate-800">Kho Tổng</p>
+                <p className="font-medium text-gray-900 wrap-break-word text-sm">
+                  {displayData.partnerValue || "---"}
+                </p>
               </div>
             )}
           </div>
@@ -106,7 +106,7 @@ export function WarehouseDetailDialog({
           <div className="border rounded overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-gray-50">
                   <TableHead>Sản phẩm</TableHead>
                   <TableHead className="text-right">Số lượng</TableHead>
                   <TableHead className="text-right">Đơn giá</TableHead>
@@ -118,7 +118,7 @@ export function WarehouseDetailDialog({
                   <TableRow key={i}>
                     <TableCell>
                       <div className="font-medium">{item.product_name}</div>
-                      <div className="text-xs text-slate-500 font-mono">
+                      <div className="text-xs text-gray-600 font-mono">
                         {item.sku}
                       </div>
                     </TableCell>
@@ -145,20 +145,21 @@ export function WarehouseDetailDialog({
 
           {/* --- Tổng kết --- */}
           <div className="flex justify-between items-center pt-2 border-t">
-            <div className="text-sm text-slate-500">
+            <div className="text-sm text-gray-600">
               {displayData.creator && (
-                <span>Người tạo: {displayData.creator} | </span>
+                <span>Người tạo: {displayData.creator} </span>
               )}
-              Tổng số lượng: <strong>{displayData.totalQuantity}</strong>
             </div>
-            <div className="text-xl font-bold text-slate-800">
+            <div className="text-base font-bold text-gray-900">
               Tổng tiền: {formatCurrency(displayData.totalAmount)}
             </div>
           </div>
 
-          {/* --- Nút bấm thêm (nếu có) --- */}
+          {/* --- HIỂN THỊ NÚT DUYỆT/XÓA --- */}
           {footerAction && (
-            <div className="flex justify-end pt-2">{footerAction}</div>
+            <div className="flex justify-end pt-4 border-t mt-4">
+              {footerAction}
+            </div>
           )}
         </div>
       </DialogContent>

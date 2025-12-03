@@ -101,7 +101,6 @@ export function SupplierList() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
         <Input
           placeholder="Tìm theo tên, SĐT, người liên hệ..."
-          className="pl-10"
           value={searchTerm}
           icon={<Search size={20} />}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -115,24 +114,20 @@ export function SupplierList() {
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button
-            onClick={handleAdd}
-            className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-          >
-            <Plus className="h-4 w-4" /> Thêm Nhà cung cấp
+          <Button variant="default" onClick={handleAdd}>
+            <Plus className="h-4 w-4" /> Thêm nhà cung cấp
           </Button>
         </div>
       </div>
 
       {/* Table */}
-
       <Table className="bg-white border border-gray-200 shadow-lg">
         <TableHeader>
           <TableRow className="bg-gray-200">
             <TableHead>Tên nhà cung cấp</TableHead>
             <TableHead>Thông tin liên hệ</TableHead>
             <TableHead>Địa chỉ</TableHead>
-            <TableHead className="text-right">Hành động</TableHead>
+            <TableHead className="text-center">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -140,39 +135,42 @@ export function SupplierList() {
             <TableRow>
               <TableCell colSpan={4} className="text-center py-10">
                 <RefreshCw className="h-6 w-6 animate-spin mx-auto text-emerald-600" />
+                Đang tải nhà cung cấp...
               </TableCell>
             </TableRow>
           ) : filteredSuppliers.length === 0 ? (
             <TableRow>
               <TableCell
                 colSpan={4}
-                className="text-center py-10 text-gray-500"
+                className="text-center py-10 text-gray-600"
               >
-                <Building2 className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                <Building2 className="h-10 w-10 mx-auto mb-2 text-gray-600" />
                 Chưa có nhà cung cấp nào
               </TableCell>
             </TableRow>
           ) : (
             filteredSuppliers.map((item) => (
-              <TableRow key={item.id} className="hover:bg-gray-50">
+              <TableRow key={item.id} className="hover:bg-gray-100">
                 <TableCell>
-                  <div className="font-semibold text-gray-800">{item.name}</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="font-semibold text-gray-900 text-sm">
+                    {item.name}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
                     MST: {item.tax_code || "---"}
                   </div>
                 </TableCell>
 
                 <TableCell>
                   <div className="space-y-1 text-sm">
-                    <div className="flex items-center gap-2 text-gray-700">
+                    <div className="flex items-center gap-2 text-gray-600">
                       <UserIcon className="h-3 w-3" />{" "}
                       <span>{item.contact_person || "---"}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-500">
+                    <div className="flex items-center gap-2 text-gray-600">
                       <Phone className="h-3 w-3" />{" "}
                       <span>{item.phone || "---"}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-500">
+                    <div className="flex items-center gap-2 text-gray-600">
                       <Mail className="h-3 w-3" />{" "}
                       <span>{item.email || "---"}</span>
                     </div>
@@ -180,17 +178,17 @@ export function SupplierList() {
                 </TableCell>
 
                 <TableCell>
-                  <div className="flex items-start gap-2 text-sm text-gray-600 max-w-xs">
+                  <div className="flex items-start gap-2 text-sm text-gray-600">
                     <MapPin className="h-3 w-3 mt-1 shrink-0" />
                     <span>{item.address || "---"}</span>
                   </div>
                 </TableCell>
 
-                <TableCell className="text-right">
+                <TableCell className="text-center">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-blue-600 hover:bg-blue-50"
+                    className="text-blue-600 hover:bg-blue-100"
                     onClick={() => handleEdit(item)}
                   >
                     <Edit className="h-4 w-4" />
@@ -198,7 +196,7 @@ export function SupplierList() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-rose-600 hover:bg-rose-50"
+                    className="text-rose-600 hover:bg-rose-100"
                     onClick={() => handleDeleteClick(item)}
                   >
                     <Trash2 className="h-4 w-4" />

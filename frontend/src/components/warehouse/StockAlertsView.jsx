@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import api from "../../config/api";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -68,110 +74,112 @@ export function StockAlertsView() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex flex-row items-center justify-between shadow-sm">
+        <Card className="p-4 bg-gray-100 border-gray-300 flex flex-row items-center justify-between shadow-sm">
           <div>
-            <p className="text-sm text-slate-700 font-medium">Tổng sản phẩm</p>
-            <p className="text-2xl font-bold text-slate-800">
+            <p className="text-sm text-gray-900 font-medium">Tổng sản phẩm</p>
+            <p className="text-3xl font-bold text-gray-900">
               {products.length}
             </p>
           </div>
-          <div className="p-3 bg-slate-100 rounded-full">
-            <Package className="h-6 w-6 text-slate-500" />
+          <div className="p-3 bg-gray-200 rounded-full">
+            <Package className="h-6 w-6 text-gray-600" />
           </div>
         </Card>
 
-        <Card className="p-4 bg-yellow-50 border-yellow-100 flex flex-row items-center justify-between shadow-sm">
+        <Card className="p-4 bg-yellow-100 border-yellow-300 flex flex-row items-center justify-between shadow-sm">
           <div>
             <p className="text-sm text-yellow-700 font-medium">Cần nhập hàng</p>
-            <p className="text-2xl font-bold text-yellow-700">
+            <p className="text-3xl font-bold text-yellow-700">
               {alertItems.length}
             </p>
           </div>
-          <div className="p-3 bg-yellow-100 rounded-full">
+          <div className="p-3 bg-yellow-200 rounded-full">
             <AlertTriangle className="h-6 w-6 text-yellow-700" />
           </div>
         </Card>
 
-        <Card className="p-4 bg-rose-50 border-rose-100 flex flex-row items-center justify-between shadow-sm">
+        <Card className="p-4 bg-rose-100 border-rose-300 flex flex-row items-center justify-between shadow-sm">
           <div>
             <p className="text-sm text-rose-700 font-medium">Hết hàng</p>
-            <p className="text-2xl font-bold text-rose-600">
+            <p className="text-3xl font-bold text-rose-700">
               {criticalItems.length}
             </p>
           </div>
-          <div className="p-3 bg-rose-100 rounded-full">
-            <AlertCircle className="h-6 w-6 text-rose-600" />
+          <div className="p-3 bg-rose-200 rounded-full">
+            <AlertCircle className="h-6 w-6 text-rose-700" />
           </div>
         </Card>
       </div>
 
-      <Card className="overflow-hidden border-slate-200">
-        <div className="p-4 border-b bg-white">
-          <h3 className="font-semibold text-slate-800 text-lg">
-            Danh sách cảnh báo tồn kho
-          </h3>
-        </div>
+      <Card className="overflow-hidden border-gray-200">
+        <CardHeader>
+          <CardTitle>Danh sách cảnh báo tồn kho</CardTitle>
+        </CardHeader>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-500">
+          <div className="p-8 text-center text-gray-600">
             Đang tải dữ liệu...
           </div>
         ) : alertItems.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center">
-            <div className="p-4 bg-emerald-50 rounded-full mb-3">
-              <CheckCircle className="h-12 w-12 text-emerald-500" />
+          <div className="p-8 text-center flex flex-col items-center">
+            <div className="p-4 bg-emerald-100 rounded-full mb-3">
+              <CheckCircle className="h-12 w-12 text-emerald-600" />
             </div>
-            <h3 className="text-lg font-medium text-emerald-700">
+            <h3 className="text-xl font-medium text-emerald-600">
               Kho hàng ổn định
             </h3>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>SKU</TableHead>
-                <TableHead>Sản phẩm</TableHead>
-                <TableHead className="text-center">Tồn hiện tại</TableHead>
-                <TableHead className="text-center">Tồn tối thiểu</TableHead>
-                <TableHead className="text-center">Thiếu hụt</TableHead>
-                <TableHead>Trạng thái</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {alertItems.map((p) => {
-                const minStock = p.min_stock || 10;
-                const alert = getAlertLevel(p.stock_quantity, minStock);
-                const Icon = alert.icon;
-                const shortage = Math.max(
-                  0,
-                  minStock - (p.stock_quantity || 0)
-                );
+          <CardContent>
+            <Table className="bg-white border border-gray-200 shadow-lg">
+              <TableHeader>
+                <TableRow className="bg-gray-200">
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead className="text-center">Tồn hiện tại</TableHead>
+                  <TableHead className="text-center">Tồn tối thiểu</TableHead>
+                  <TableHead className="text-center">Thiếu hụt</TableHead>
+                  <TableHead className="text-center">Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {alertItems.map((p) => {
+                  const minStock = p.min_stock || 10;
+                  const alert = getAlertLevel(p.stock_quantity, minStock);
+                  const Icon = alert.icon;
+                  const shortage = Math.max(
+                    0,
+                    minStock - (p.stock_quantity || 0)
+                  );
 
-                return (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-mono text-xs">{p.sku}</TableCell>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="text-center font-bold">
-                      {p.stock_quantity}
-                    </TableCell>
-                    <TableCell className="text-center text-slate-500">
-                      {minStock}
-                    </TableCell>
-                    <TableCell className="text-center text-rose-600 font-medium">
-                      -{shortage}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`${alert.color} border-0 flex w-fit items-center gap-1`}
-                      >
-                        <Icon className="h-3 w-3" /> {alert.label}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                  return (
+                    <TableRow key={p.id} className="hover:bg-gray-100">
+                      <TableCell className="font-mono text-xs">
+                        {p.sku}
+                      </TableCell>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="text-center text-emerald-600 font-medium">
+                        {p.stock_quantity}
+                      </TableCell>
+                      <TableCell className="text-center text-gray-600">
+                        {minStock}
+                      </TableCell>
+                      <TableCell className="text-center text-rose-600 font-medium">
+                        -{shortage}
+                      </TableCell>
+                      <TableCell className="flex justify-center">
+                        <Badge
+                          className={`${alert.color} border-none flex w-fit items-center gap-1`}
+                        >
+                          <Icon className="h-3 w-3" /> {alert.label}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
         )}
       </Card>
     </div>

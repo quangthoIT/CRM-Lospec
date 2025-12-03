@@ -32,7 +32,6 @@ import {
 import { toast } from "sonner";
 import { StaffFormDialog } from "./StaffFormDialog";
 import { ConfirmDeleteDialog } from "../ConfirmDeleteDialog";
-import { Card } from "../ui/card";
 
 export function StaffList() {
   const [users, setUsers] = useState([]);
@@ -121,7 +120,7 @@ export function StaffList() {
   return (
     <div className="space-y-4">
       {/* Tools */}
-      <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border shadow-sm gap-4">
+      <div className="flex justify-between items-center bg-white p-4 rounded-lg border shadow-sm gap-4">
         <Input
           placeholder="Tìm tên, email..."
           className="pl-10"

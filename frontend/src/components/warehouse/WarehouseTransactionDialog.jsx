@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import api from "../../config/api";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/table";
 import { CheckCircle, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/config/api";
 
 export function WarehouseTransactionDialog({
   open,
@@ -53,7 +52,9 @@ export function WarehouseTransactionDialog({
   const [selectedProduct, setSelectedProduct] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [tempPrice, setTempPrice] = useState(0);
-  const [poNumber, setPoNumber] = useState(""); // Chỉ dùng cho Import
+
+  // ✅ Sử dụng transactionNumber chung cho cả PO Number (Nhập) và Export Number (Xuất)
+  const [transactionNumber, setTransactionNumber] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -64,7 +65,7 @@ export function WarehouseTransactionDialog({
       setNotes("");
       setTransactionDate(new Date().toISOString().split("T")[0]);
       setPartnerId(isImport ? "" : DEFAULT_BRANCH.id);
-      setPoNumber("");
+      setTransactionNumber("");
       setSelectedProduct("");
       setQuantity(1);
       setTempPrice(0);
@@ -131,7 +132,7 @@ export function WarehouseTransactionDialog({
 
   const handleSubmit = async () => {
     if (isImport && !partnerId)
-      return toast.error("Vui lòng chọn Nhà cung cấp");
+      return toast.error("Vui lòng chọn nhà cung cấp");
     if (items.length === 0) return toast.error("Chưa có sản phẩm nào");
 
     setLoading(true);
@@ -145,18 +146,25 @@ export function WarehouseTransactionDialog({
         payload = {
           ...payload,
           supplier_id: partnerId,
-          po_number: poNumber || undefined,
+          // ✅ Sửa lỗi: Dùng transactionNumber thay vì poNumber chưa định nghĩa
+          po_number: transactionNumber || undefined,
         };
         await api.post("/warehouse/import", payload);
       } else {
         payload = {
           ...payload,
           branch_id: partnerId,
+          // Có thể gửi thêm export_number nếu backend hỗ trợ manual code
+          // export_number: transactionNumber || undefined
         };
         await api.post("/warehouse/export", payload);
       }
 
-      toast.success(isImport ? "Nhập kho thành công!" : "Xuất kho thành công!");
+      toast.success(
+        isImport
+          ? "Tạo phiếu nhập kho thành công (Chờ duyệt)!"
+          : "Tạo phiếu xuất kho thành công (Chờ duyệt)!"
+      );
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -176,12 +184,12 @@ export function WarehouseTransactionDialog({
           </DialogTitle>
           <DialogDescription>
             {isImport
-              ? "Nhập hàng từ nhà cung cấp và cộng tồn kho."
-              : "Xuất hàng khỏi kho và trừ tồn kho ngay lập tức."}
+              ? "Tạo phiếu nhập hàng từ nhà cung cấp"
+              : "Tạo phiếu xuất hàng khỏi kho"}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 mt-2">
           {/* --- HEADER FORM --- */}
           <div className="grid grid-cols-2 gap-4">
             {isImport ? (
@@ -203,9 +211,9 @@ export function WarehouseTransactionDialog({
                 </Select>
               </div>
             ) : (
-              <div className="space-y-2 pointer-events-none">
+              <div className="space-y-2 opacity-70 pointer-events-none">
                 <Label>Chi nhánh xuất</Label>
-                <div className="opacity-70 flex h-10 w-full items-center rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-500">
+                <div className="flex h-10 w-full items-center rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-gray-500">
                   <Store className="mr-2 h-4 w-4" />
                   {DEFAULT_BRANCH.name}
                 </div>
@@ -220,19 +228,16 @@ export function WarehouseTransactionDialog({
                 onChange={(e) => setTransactionDate(e.target.value)}
               />
             </div>
+            <div className="space-y-2">
+              <Label>Mã phiếu (Tùy chọn)</Label>
+              <Input
+                value={transactionNumber}
+                onChange={(e) => setTransactionNumber(e.target.value)}
+                placeholder="Tự động tạo nếu để trống"
+              />
+            </div>
 
-            {isImport && (
-              <div className="space-y-2">
-                <Label>Mã phiếu (Tùy chọn)</Label>
-                <Input
-                  value={poNumber}
-                  onChange={(e) => setPoNumber(e.target.value)}
-                  placeholder="Tự động tạo nếu để trống"
-                />
-              </div>
-            )}
-
-            <div className={`${isImport ? "" : "col-span-2"} space-y-2`}>
+            <div className="space-y-2">
               <Label>{isImport ? "Ghi chú" : "Lý do xuất kho"}</Label>
               <Input
                 value={notes}
@@ -246,7 +251,7 @@ export function WarehouseTransactionDialog({
 
           {/* --- ADD PRODUCTS --- */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-            <div className="space-y-2">
+            <div className="flex flex-col space-y-2">
               <Label>Chọn sản phẩm</Label>
               <Select
                 value={selectedProduct}
@@ -258,7 +263,7 @@ export function WarehouseTransactionDialog({
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn sản phẩm..." />
+                  <SelectValue placeholder="Tìm kiếm sản phẩm..." />
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((p) => (
@@ -293,7 +298,7 @@ export function WarehouseTransactionDialog({
                   onChange={(e) => setTempPrice(Number(e.target.value))}
                 />
               </div>
-              <div className="col-span-2">
+              <div>
                 <Button onClick={handleAddItem} variant="secondary">
                   Thêm
                 </Button>
@@ -306,9 +311,10 @@ export function WarehouseTransactionDialog({
                 <TableRow>
                   <TableHead>Mã SKU</TableHead>
                   <TableHead>Tên sản phẩm</TableHead>
-                  <TableHead>SL</TableHead>
-                  <TableHead>Đơn giá</TableHead>
-                  <TableHead>Thành tiền</TableHead>
+                  <TableHead className="text-right">SL</TableHead>
+                  <TableHead className="text-right">Đơn giá</TableHead>
+                  <TableHead className="text-right">Thành tiền</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -351,7 +357,7 @@ export function WarehouseTransactionDialog({
               </TableBody>
             </Table>
 
-            <div className="flex justify-end border-t pt-4 text-base">
+            <div className="flex justify-end border-t pt-4 text-lg">
               <span className="text-gray-600 mr-2">Tổng giá trị:</span>
               <span className="font-bold text-emerald-600">
                 {formatCurrency(items.reduce((s, i) => s + i.total, 0))}
@@ -365,12 +371,15 @@ export function WarehouseTransactionDialog({
             </Button>
             <Button
               onClick={handleSubmit}
-              variant="default"
               disabled={loading}
-              className={`${isImport ? "" : "bg-rose-600 hover:bg-rose-700"}`}
+              className={`${
+                isImport
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-rose-600 hover:bg-rose-700"
+              }`}
             >
               <CheckCircle className="h-4 w-4 mr-2" />
-              {isImport ? "Xác nhận nhập Kho" : "Xác nhận xuất kho"}
+              {isImport ? "Tạo phiếu nhập kho" : "Tạo phiếu xuất kho"}
             </Button>
           </DialogFooter>
         </div>

@@ -21,7 +21,7 @@ export default function Warehouse() {
           <TabsTrigger value="alerts">Cảnh báo tồn kho</TabsTrigger>
         </TabsList>
 
-        <div className="mt-4 bg-gray-50 rounded-lg shadow-md p-4">
+        <div className="mt-4 bg-white rounded-lg shadow-md p-4">
           <TabsContent value="import">
             <ImportWarehouseView />
           </TabsContent>

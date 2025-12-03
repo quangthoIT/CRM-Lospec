@@ -18,16 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import {
-  Search,
-  Package,
-  Edit,
-  Trash2,
-  Plus,
-  RefreshCw,
-  SearchCheck,
-} from "lucide-react";
+import { Search, Package, Edit, Trash2, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "../ConfirmDeleteDialog";
 
@@ -45,12 +36,11 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
   const [productToDelete, setProductToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // --- 1. Fetch Data from API ---
+  // --- Fetch Data from API ---
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const { data } = await api.get("/products");
-      // data trả về là mảng sản phẩm
       setProducts(data || []);
     } catch (error) {
       console.error("Fetch error:", error);
@@ -62,9 +52,9 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
 
   useEffect(() => {
     fetchProducts();
-  }, [refreshTrigger]); // Reload khi Parent yêu cầu
+  }, [refreshTrigger]);
 
-  // --- 2. Filter Logic (Client-side) ---
+  // --- Filter Logic ---
   const filteredProducts = products.filter((p) => {
     const matchSearch =
       p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -81,13 +71,13 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
     return matchSearch && matchCategory && matchStatus;
   });
 
-  // --- 3. Delete Logic ---
+  // --- Delete Logic ---
   const confirmDelete = async () => {
     if (!productToDelete) return;
     try {
       await api.delete(`/products/${productToDelete.id}`);
       toast.success("Đã xóa sản phẩm");
-      fetchProducts(); // Reload lại list gốc
+      fetchProducts();
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Lỗi khi xóa sản phẩm.");
@@ -128,7 +118,7 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
   return (
     <div className="space-y-4">
       {/* --- Filter Bar --- */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-gray-50 p-4 rounded-lg shadow-sm border">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-lg shadow-sm border">
         <div className="flex flex-1 gap-2 w-full">
           <div className="relative flex-1 max-w-sm">
             <Input
@@ -182,121 +172,114 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
       </div>
 
       {/* --- Table --- */}
-      <Card className="overflow-hidden">
-        {loading ? (
-          <div className="h-64 flex items-center justify-center text-slate-500">
-            <RefreshCw className="h-6 w-6 animate-spin mr-2" /> Đang tải dữ
-            liệu...
-          </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-500">
-            <Package className="h-12 w-12 text-slate-300 mb-2" />
-            <p>Không tìm thấy sản phẩm nào.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow>
-                  <TableHead>Hình ảnh</TableHead>
-                  <TableHead>Tên sản phẩm</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Danh mục</TableHead>
-                  <TableHead>Đơn vị</TableHead>
-                  <TableHead>Tồn kho</TableHead>
-                  <TableHead>Giá bán</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-center">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <div className="h-12 w-12 rounded bg-gray-200 overflow-hidden border">
-                        {p.image_url ? (
-                          <img
-                            src={p.image_url}
-                            alt={p.name}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src =
-                                "https://placehold.co/40x40?text=IMG";
-                            }}
-                          />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center text-xs text-slate-400">
-                            No Img
-                          </div>
-                        )}
+      {loading ? (
+        <div className="h-56 flex items-center justify-center text-gray-600">
+          <RefreshCw className="h-6 w-6 animate-spin mr-2" /> Đang tải dữ
+          liệu...
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="h-56 flex flex-col items-center justify-center text-gray-600">
+          <Package className="h-12 w-12 mb-2" />
+          <p>Không tìm thấy sản phẩm nào.</p>
+        </div>
+      ) : (
+        <Table className="bg-white border border-gray-200 shadow-lg">
+          <TableHeader>
+            <TableRow className="bg-gray-200">
+              <TableHead>Hình ảnh</TableHead>
+              <TableHead>Tên sản phẩm</TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead className="text-center">Danh mục</TableHead>
+              <TableHead className="text-center">Đơn vị</TableHead>
+              <TableHead className="text-center">Tồn kho</TableHead>
+              <TableHead className="text-center">Giá bán</TableHead>
+              <TableHead className="text-center">Trạng thái</TableHead>
+              <TableHead className="text-center">Thao tác</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredProducts.map((p) => (
+              <TableRow key={p.id} className="hover:bg-gray-100">
+                <TableCell>
+                  <div className="h-12 w-12 rounded bg-gray-200 overflow-hidden border">
+                    {p.image_url ? (
+                      <img
+                        src={p.image_url}
+                        alt={p.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://placehold.co/40x40?text=IMG";
+                        }}
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xs text-gray-400">
+                        No Img
                       </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="font-mono text-xs">{p.sku}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-normal">
-                        {p.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{unitLabels[p.unit] || p.unit}</TableCell>
-                    <TableCell>
-                      <span
-                        className={
-                          p.stock_quantity <= p.min_stock
-                            ? "text-rose-600 font-bold"
-                            : ""
-                        }
-                      >
-                        {p.stock_quantity}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-medium text-emerald-600">
-                      {formatCurrency(p.price)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={p.is_active ? "outline" : "secondary"}
-                        className={
-                          p.is_active
-                            ? "border-emerald-600 text-emerald-700 bg-emerald-50"
-                            : ""
-                        }
-                      >
-                        {p.is_active ? "Đang bán" : "Ngừng bán"}
-                      </Badge>
-                    </TableCell>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium">{p.name}</TableCell>
+                <TableCell className="font-mono text-xs">{p.sku}</TableCell>
+                <TableCell className="text-center">
+                  <Badge variant="secondary">{p.category}</Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  {unitLabels[p.unit] || p.unit}
+                </TableCell>
+                <TableCell className="text-center">
+                  <span
+                    className={
+                      p.stock_quantity <= p.min_stock
+                        ? "text-rose-600 font-bold"
+                        : ""
+                    }
+                  >
+                    {p.stock_quantity}
+                  </span>
+                </TableCell>
+                <TableCell className="font-medium text-center text-emerald-600">
+                  {formatCurrency(p.price)}
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge
+                    variant={p.is_active ? "outline" : "secondary"}
+                    className={
+                      p.is_active
+                        ? "border-emerald-600 text-emerald-700 bg-emerald-50"
+                        : ""
+                    }
+                  >
+                    {p.is_active ? "Đang bán" : "Ngừng bán"}
+                  </Badge>
+                </TableCell>
 
-                    <TableCell>
-                      <div className="flex justify-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          onClick={() => onEdit(p)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                          onClick={() => {
-                            setProductToDelete(p);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </Card>
+                <TableCell className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-blue-600 hover:bg-blue-100"
+                    onClick={() => onEdit(p)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-rose-600 hover:bg-rose-100"
+                    onClick={() => {
+                      setProductToDelete(p);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
       {/* --- Delete Dialog --- */}
       <ConfirmDeleteDialog
