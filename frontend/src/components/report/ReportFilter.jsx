@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar as CalendarIcon, Filter } from "lucide-react";
+import { Input } from "../ui/input";
 
 export function ReportFilter({
   filterType,
@@ -56,27 +57,23 @@ export function ReportFilter({
       {/* Chọn Ngày Tùy Chỉnh */}
       {filterType === "custom" && (
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
-            <input
-              type="date"
-              className="text-sm w-32"
-              value={dateRange.startDate}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, startDate: e.target.value })
-              }
-            />
-          </div>
-          <span className="text-sm text-gray-400">đến</span>
-          <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
-            <input
-              type="date"
-              className="text-sm w-32"
-              value={dateRange.endDate}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, endDate: e.target.value })
-              }
-            />
-          </div>
+          <Input
+            type="date"
+            value={dateRange.startDate}
+            onChange={(e) =>
+              setDateRange({ ...dateRange, startDate: e.target.value })
+            }
+            className="flex items-center bg-white border border-gray-200 rounded px-2 py-1"
+          />
+          <span className="text-sm text-gray-600">đến</span>
+          <Input
+            type="date"
+            value={dateRange.endDate}
+            onChange={(e) =>
+              setDateRange({ ...dateRange, endDate: e.target.value })
+            }
+            className="flex items-center bg-white border border-gray-200 rounded px-2 py-1"
+          />
         </div>
       )}
     </div>
