@@ -213,8 +213,8 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
                         }}
                       />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center text-xs text-gray-400">
-                        No Img
+                      <div className="h-full w-full flex items-center justify-center">
+                        <Package className="h-8 w-8 text-gray-400" />
                       </div>
                     )}
                   </div>

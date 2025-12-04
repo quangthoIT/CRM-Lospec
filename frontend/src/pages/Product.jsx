@@ -30,7 +30,7 @@ const Product = () => {
     <div className="mx-auto">
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý sản phẩm</h1>
-        <p className="text-gray-600">Quản lý danh mục, giá cả và tồn kho.</p>
+        <p className="text-gray-600">Quản lý danh mục, giá cả và tồn kho</p>
       </div>
 
       {/* Component Danh sách */}

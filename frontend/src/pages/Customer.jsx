@@ -1,12 +1,13 @@
 import { CustomerList } from "@/components/customer/CustomerList";
 
-
 const CustomerPage = () => {
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Quản lý Khách hàng</h1>
-        <p className="text-sm text-slate-500">Danh sách khách hàng thân thiết và lịch sử mua sắm</p>
+    <div className="mx-auto">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý khách hàng</h1>
+        <p className="text-gray-600">
+          Danh sách khách hàng thân thiết và lịch sử mua sắm
+        </p>
       </div>
 
       <CustomerList />

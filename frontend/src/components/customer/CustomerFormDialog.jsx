@@ -159,7 +159,9 @@ export function CustomerFormDialog({
 
             {/* Phone */}
             <div className="col-span-1">
-              <Label htmlFor="phone">Số điện thoại</Label>
+              <Label htmlFor="phone">
+                Số điện thoại <span className="text-rose-600">*</span>
+              </Label>
               <Input
                 id="phone"
                 type="tel"
@@ -168,6 +170,7 @@ export function CustomerFormDialog({
                   setFormData({ ...formData, phone: e.target.value })
                 }
                 placeholder="0912345678"
+                required
               />
             </div>
 

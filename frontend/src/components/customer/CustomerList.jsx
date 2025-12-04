@@ -216,7 +216,7 @@ export function CustomerList() {
         <Card className="p-4 flex flex-row items-center justify-between shadow-sm">
           <div>
             <p className="text-sm text-gray-600">Tổng khách hàng</p>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-2xl font-bold text-gray-900">
               {customers.length}
             </p>
           </div>
@@ -227,7 +227,7 @@ export function CustomerList() {
         <Card className="p-4 flex flex-row items-center justify-between shadow-sm">
           <div>
             <p className="text-sm text-gray-600">Khách VIP/Sỉ</p>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-gray-900">
               {
                 customers.filter((c) =>
                   ["gold", "diamond"].includes(c.membershipTier)
@@ -242,7 +242,7 @@ export function CustomerList() {
         <Card className="p-4 flex flex-row items-center justify-between shadow-sm">
           <div>
             <p className="text-sm text-gray-600">Tổng đơn hàng</p>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-gray-900">
               {customers.reduce((sum, c) => sum + c.totalOrders, 0)}
             </p>
           </div>
@@ -253,7 +253,7 @@ export function CustomerList() {
         <Card className="p-4 flex flex-row items-center justify-between shadow-sm">
           <div>
             <p className="text-sm text-gray-600">Tổng doanh thu</p>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-gray-900">
               {formatCurrency(
                 customers.reduce((sum, c) => sum + c.totalSpent, 0)
               )}
