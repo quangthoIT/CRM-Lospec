@@ -65,7 +65,7 @@ export default function ReportPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             Báo cáo & Thống kê
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-gray-600">
             Tổng quan tình hình kinh doanh từ{" "}
             {new Date(dateRange.startDate).toLocaleDateString("vi-VN")} đến{" "}
             {new Date(dateRange.endDate).toLocaleDateString("vi-VN")}

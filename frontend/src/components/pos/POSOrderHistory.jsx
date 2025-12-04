@@ -29,6 +29,7 @@ import {
   Printer,
 } from "lucide-react";
 import { toast } from "sonner";
+import { printReceipt } from "./ReceiptPrinter";
 
 export function POSOrderHistory() {
   const [orders, setOrders] = useState([]);
@@ -39,12 +40,38 @@ export function POSOrderHistory() {
 
   useEffect(() => {
     fetchOrders();
+    fetchSettings();
 
     // Tự động tải lại khi focus vào cửa sổ (hỗ trợ khi chuyển tab quay lại)
     const onFocus = () => fetchOrders();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
+
+  const [settings, setSettings] = useState({
+    store_name: "LOSPEC",
+    store_address: "",
+    store_phone: "",
+    store_email: "",
+    tax_rate: 0,
+  });
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await api.get("/settings");
+      if (data) {
+        setSettings({
+          store_name: data.store_name || "LOSPEC",
+          store_address: data.store_address || "",
+          store_phone: data.store_phone || "",
+          store_email: data.store_email || "",
+          tax_rate: Number(data.tax_rate) || 10,
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi tải cài đặt:", error);
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -104,73 +131,15 @@ export function POSOrderHistory() {
   };
 
   const handlePrintReceipt = () => {
-    if (!selectedOrder) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      toast.error("Vui lòng cho phép mở cửa sổ bật lên để in");
-      return;
-    }
-
-    const htmlContent = `
-      <html>
-        <head><title>Hóa đơn - ${selectedOrder.order_number}</title>
-          <style>
-            body { font-family: 'Courier New', monospace; padding: 10px; max-width: 300px; margin: 0 auto; font-size: 12px; color: #000; }
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-            .bold { font-weight: bold; }
-            .line { border-bottom: 1px dashed #000; margin: 8px 0; }
-            .item { display: flex; justify-content: space-between; margin-bottom: 4px; }
-          </style>
-        </head>
-        <body>
-          <div class="text-center">
-            <h2 style="margin:0; font-size:18px;">LOSPEC</h2>
-            <p style="margin:0;">HÓA ĐƠN SAO LƯU</p>
-          </div>
-          <div class="line"></div>
-          <div>Số phiếu: ${selectedOrder.order_number}<br/>Ngày: ${formatDate(
-      selectedOrder.created_at
-    )}<br/>Khách: ${selectedOrder.customer_name || "Khách lẻ"}</div>
-          <div class="line"></div>
-          <div>${selectedOrder.items
-            ?.map(
-              (item) =>
-                `<div class="item"><div style="flex:1;">${
-                  item.product_name
-                }<br/>${item.quantity} x ${formatCurrency(
-                  item.unit_price
-                )}</div><div class="text-right">${formatCurrency(
-                  item.total
-                )}</div></div>`
-            )
-            .join("")}</div>
-          <div class="line"></div>
-          <div class="item"><span>Tạm tính:</span><span>${formatCurrency(
-            selectedOrder.subtotal
-          )}</span></div>
-
-          ${
-            selectedOrder.discount > 0
-              ? `<div class="item"><span>Giảm giá:</span><span>-${formatCurrency(
-                  selectedOrder.discount
-                )}</span></div>`
-              : ""
-          }
-              <div class="item"><span>Thuế (10%):</span><span>${formatCurrency(
-                selectedOrder.tax
-              )}</span></div>
-          <div class="item bold" style="margin-top:5px;"><span>TỔNG CỘNG:</span><span>${formatCurrency(
-            selectedOrder.total
-          )}</span></div>
-        </body>
-      </html>`;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
+    printReceipt({
+      order: selectedOrder,
+      items: selectedOrder.items,
+      settings: settings,
+      customerName: selectedOrder.customer_name || "Khách lẻ",
+      paymentInfo: {
+        method: selectedOrder.payment_method,
+      },
+    });
   };
 
   const filteredOrders = orders.filter(

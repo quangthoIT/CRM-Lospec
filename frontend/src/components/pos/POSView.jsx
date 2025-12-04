@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomerFormDialog } from "../customer/CustomerFormDialog";
+import { printReceipt } from "./ReceiptPrinter";
 
 export function POSView() {
   const [products, setProducts] = useState([]);
@@ -73,7 +74,33 @@ export function POSView() {
 
   useEffect(() => {
     fetchData();
+    fetchSettings();
   }, []);
+
+  const [settings, setSettings] = useState({
+    store_name: "LOSPEC",
+    store_address: "",
+    store_phone: "",
+    store_email: "",
+    tax_rate: 0,
+  });
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await api.get("/settings");
+      if (data) {
+        setSettings({
+          store_name: data.store_name || "LOSPEC",
+          store_address: data.store_address || "",
+          store_phone: data.store_phone || "",
+          store_email: data.store_email || "",
+          tax_rate: Number(data.tax_rate) || 10,
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi tải cài đặt:", error);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -179,7 +206,7 @@ export function POSView() {
       : discountAmount;
 
   // Tính thuế 10%
-  const taxRate = 0.1;
+  const taxRate = settings.tax_rate / 100;
   const taxableAmount = Math.max(0, subtotal - calculatedDiscount);
   const tax = taxableAmount * taxRate;
 
@@ -196,81 +223,17 @@ export function POSView() {
 
   // --- HÀM IN HÓA ĐƠN ---
   const handlePrintReceipt = () => {
-    if (!lastOrder) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      toast.error("Vui lòng cho phép mở cửa sổ bật lên để in");
-      return;
-    }
-    const customerName = selectedCustomer ? selectedCustomer.name : "Khách lẻ";
-    const now = new Date().toLocaleString("vi-VN");
-
-    const htmlContent = `
-      <html>
-        <head>
-          <title>Hóa đơn - ${lastOrder.order_number}</title>
-          <style>
-            body { font-family: 'Courier New', monospace; padding: 10px; max-width: 300px; margin: 0 auto; font-size: 12px; color: #000; }
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-            .bold { font-weight: bold; }
-            .line { border-bottom: 1px dashed #000; margin: 8px 0; }
-            .item { display: flex; justify-content: space-between; margin-bottom: 4px; }
-          </style>
-        </head>
-        <body>
-          <div class="text-center">
-            <h2 style="margin: 0; font-size: 18px;">LOSPEC</h2>
-            <p style="margin: 0;">HÓA ĐƠN BÁN LẺ</p>
-          </div>
-          <div class="line"></div>
-          <div>Số phiếu: ${
-            lastOrder.order_number
-          }<br/>Ngày: ${now}<br/>Khách hàng: ${customerName}</div>
-          <div class="line"></div>
-          <div>
-            ${lastOrderItems
-              .map(
-                (item) => `
-              <div class="item">
-                <div style="flex: 1;">${item.productName}<br/>
-                  <span style="font-size: 10px;">${
-                    item.quantity
-                  } x ${formatCurrency(item.unitPrice)}</span>
-                </div>
-                <div class="text-right">${formatCurrency(
-                  item.quantity * item.unitPrice
-                )}</div>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-          <div class="line"></div>
-          <div class="item"><span>Tạm tính:</span><span>${formatCurrency(
-            lastOrder.subtotal
-          )}</span></div>
-          <div class="item"><span>Giảm giá:</span><span>-${formatCurrency(
-            lastOrder.discount
-          )}</span></div>
-          <div class="item"><span>Thuế (10%):</span><span>${formatCurrency(
-            lastOrder.tax
-          )}</span></div>
-          <div class="item bold" style="font-size: 14px; margin-top: 5px;">
-            <span>TỔNG CỘNG:</span><span>${formatCurrency(
-              lastOrder.total
-            )}</span>
-          </div>
-          <div class="line"></div>
-          <div class="text-center"><p>Cảm ơn quý khách!</p></div>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
+    printReceipt({
+      order: lastOrder,
+      items: lastOrderItems,
+      settings: settings,
+      customerName: selectedCustomer?.name || "Khách lẻ",
+      paymentInfo: {
+        method: paymentMethod,
+        receivedAmount: receivedAmount,
+        changeAmount: changeAmount,
+      },
+    });
   };
 
   const handlePayment = async () => {
@@ -303,7 +266,7 @@ export function POSView() {
       setShowPaymentDialog(false);
       setShowReceipt(true);
 
-      clearCart();
+      // clearCart();
       fetchData();
     } catch (error) {
       console.error("Payment error:", error);
@@ -600,7 +563,9 @@ export function POSView() {
             </div>
 
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Thuế (10%)</span>
+              <span className="text-slate-600">
+                Thuế ({settings.tax_rate}%):
+              </span>
               <span className="font-medium">{formatCurrency(tax)}</span>
             </div>
             <div className="flex justify-between border-t pt-2 mt-2">

@@ -86,7 +86,7 @@ const menuItems = [
   },
   {
     icon: Settings,
-    name: "Hệ thống & Cài đặt",
+    name: "Cài đặt hệ thống",
     path: "/settings",
     roles: ["admin"],
   },

@@ -60,7 +60,7 @@ export function RevenueChart({ data }) {
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                   }}
                 />
-                <Legend />
+                {/* <Legend /> */}
                 <Bar
                   dataKey="revenue"
                   name="Doanh thu"
