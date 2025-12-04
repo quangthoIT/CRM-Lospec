@@ -5,7 +5,6 @@ import {
   Warehouse,
   Settings,
   ChevronRight,
-  Box,
   ShoppingCart,
   Users,
   Truck,
@@ -26,7 +25,7 @@ const menuItems = [
     roles: ["staff", "manager", "admin"],
   },
   {
-    icon: Box,
+    icon: Package,
     name: "Sản phẩm",
     path: "/products",
     roles: ["staff", "manager", "admin"],
@@ -75,7 +74,7 @@ const menuItems = [
   },
   {
     icon: BarChart3,
-    name: "Báo cáo & Phân tích",
+    name: "Báo cáo & Thống kê",
     path: "/reports",
     roles: ["manager", "admin"],
   },

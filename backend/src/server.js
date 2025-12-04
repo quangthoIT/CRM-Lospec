@@ -7,6 +7,7 @@ import supplierRouter from "./routes/supplierRoute.js";
 import warehouseRouter from "./routes/warehouseRoute.js";
 import customerRouter from "./routes/customerRoute.js";
 import orderRouter from "./routes/orderRoute.js";
+import reportRouter from "./routes/reportRoute.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 3001;
@@ -25,6 +26,7 @@ app.use("/api/suppliers", supplierRouter);
 app.use("/api/warehouse", warehouseRouter);
 app.use("/api/customers", customerRouter);
 app.use("/api/orders", orderRouter);
+app.use("/api/reports", reportRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
