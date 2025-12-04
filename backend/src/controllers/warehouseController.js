@@ -421,15 +421,21 @@ export const deleteExport = async (req, res) => {
 
 export const getStockAlerts = async (req, res) => {
   try {
+    // Lấy các sản phẩm có tồn kho <= mức tối thiểu
+    // COALESCE(min_stock, 10): Nếu chưa set min_stock thì mặc định là 10
     const query = `
       SELECT * FROM products
-      WHERE stock_quantity <= reorder_point
+      WHERE stock_quantity <= COALESCE(min_stock, 10)
+      AND is_active = true
       ORDER BY stock_quantity ASC
     `;
     const result = await pool.query(query);
     res.status(200).json(result.rows);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get Stock Alerts Error:", error);
+    res
+      .status(500)
+      .json({ message: "Lỗi khi lấy cảnh báo tồn kho: " + error.message });
   }
 };
 
@@ -438,7 +444,7 @@ export const getAllTransactions = async (req, res) => {
     const query = `
       SELECT wt.*, p.name as product_name, p.sku, u.full_name as user_name
       FROM warehouse_transactions wt
-      JOIN products p ON wt.product_id = p.id
+      LEFT JOIN products p ON wt.product_id = p.id
       LEFT JOIN users u ON wt.user_id = u.id
       ORDER BY wt.created_at DESC
       LIMIT 100
@@ -446,6 +452,7 @@ export const getAllTransactions = async (req, res) => {
     const result = await pool.query(query);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error("Get Transactions Error:", error);
     res.status(500).json({ message: error.message });
   }
 };

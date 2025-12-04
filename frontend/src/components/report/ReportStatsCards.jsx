@@ -12,7 +12,7 @@ export function ReportStatsCards({ stats }) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg text-gray-600">Doanh thu</CardTitle>
+          <CardTitle className="text-lg text-gray-700">Doanh thu</CardTitle>
           <div className="p-2 bg-gray-100 rounded-full">
             <DollarSign className="h-4 w-4 text-gray-600" />
           </div>
