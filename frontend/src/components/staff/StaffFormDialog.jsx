@@ -134,7 +134,7 @@ export function StaffFormDialog({ open, onOpenChange, user, onSuccess }) {
                 onChange={handleChange}
                 placeholder="email@example.com"
                 disabled={!!user}
-                className={user ? "bg-slate-100" : ""}
+                className={user ? "bg-gray-100" : ""}
               />
             </div>
             <div className="space-y-2">

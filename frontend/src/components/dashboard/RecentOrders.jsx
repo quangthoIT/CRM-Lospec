@@ -71,7 +71,7 @@ export function RecentOrders({ orders = [] }) {
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="text-center py-6 text-slate-500 text-sm"
+                  className="text-center py-6 text-gray-600 text-sm"
                 >
                   Chưa có đơn hàng nào
                 </TableCell>

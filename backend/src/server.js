@@ -10,6 +10,7 @@ import orderRouter from "./routes/orderRoute.js";
 import reportRouter from "./routes/reportRoute.js";
 import financeRouter from "./routes/financeRoute.js";
 import settingRouter from "./routes/settingRoute.js";
+import promotionRouter from "./routes/promotionRoute.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +29,7 @@ app.use("/api/orders", orderRouter);
 app.use("/api/customers", customerRouter);
 app.use("/api/warehouse", warehouseRouter);
 app.use("/api/suppliers", supplierRouter);
+app.use("/api/promotions", promotionRouter);
 app.use("/api/reports", reportRouter);
 app.use("/api/finances", financeRouter);
 app.use("/api/settings", settingRouter);

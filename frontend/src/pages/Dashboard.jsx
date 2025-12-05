@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   if (loading && !stats) {
     return (
-      <div className="h-[calc(100vh-80px)] flex items-center justify-center text-slate-500">
+      <div className="h-[calc(100vh-80px)] flex items-center justify-center text-gray-600">
         Đang tải dữ liệu tổng quan...
       </div>
     );

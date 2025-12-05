@@ -188,7 +188,7 @@ export function ProductFormDialog({ open, onOpenChange, product, onSuccess }) {
               />
             </div>
 
-            <div className="space-y-2  min-w-0 w-full">
+            <div className="space-y-2 min-w-0 w-full">
               <Label htmlFor="category">
                 Danh mục <span className="text-rose-500">*</span>
               </Label>
@@ -278,19 +278,7 @@ export function ProductFormDialog({ open, onOpenChange, product, onSuccess }) {
             </div>
           </div>
 
-          <div className="flex gap-4 justify-between">
-            <div className="space-y-2">
-              <Label htmlFor="stock_quantity">Tồn kho</Label>
-              <Input
-                id="stock_quantity"
-                type="number"
-                min={0}
-                value={formData.stock_quantity}
-                onChange={(e) =>
-                  setFormData({ ...formData, stock_quantity: e.target.value })
-                }
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Min Stock</Label>
               <Input
