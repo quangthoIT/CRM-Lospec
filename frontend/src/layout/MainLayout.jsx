@@ -42,7 +42,7 @@ const MainLayout = () => {
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6 w-full">
-          <div className="mx-auto max-w-7xl h-full">
+          <div className="mx-auto h-full">
             <Outlet />
           </div>
         </main>
