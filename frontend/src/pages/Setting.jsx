@@ -21,9 +21,11 @@ import {
   Download,
   Upload,
   AlertTriangle,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+import { PermissionTab } from "@/components/setting/PermissionTab";
 
 export default function SettingPage() {
   const { logout } = useAuth();
@@ -187,6 +189,9 @@ export default function SettingPage() {
           <TabsTrigger value="payment" className="gap-2">
             <CreditCard className="h-4 w-4" />{" "}
             <span className="hidden md:inline">Thanh toán</span>
+          </TabsTrigger>{" "}
+          <TabsTrigger value="permissions" className="gap-2 py-2">
+            <Shield className="h-4 w-4" /> Phân quyền
           </TabsTrigger>
           <TabsTrigger value="backup" className="gap-2">
             <Database className="h-4 w-4" />{" "}
@@ -316,6 +321,11 @@ export default function SettingPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/*         {/* --- TAB: QUẢN Lý QUYỀN --- */}
+        <TabsContent value="permissions">
+          <PermissionTab />
         </TabsContent>
 
         {/* --- TAB: SAO LƯU & PHỤC HỒI --- */}
