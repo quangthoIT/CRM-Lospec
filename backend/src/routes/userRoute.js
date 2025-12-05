@@ -6,6 +6,7 @@ import {
   deleteUser,
   getCurrentUser,
   getUserById,
+  changePassword,
 } from "../controllers/userController.js";
 import {
   checkIn,
@@ -27,6 +28,7 @@ userRouter.use(authMiddleware);
 
 // --- CÁ NHÂN ---
 userRouter.get("/me", getCurrentUser);
+userRouter.put("/change-password", changePassword);
 userRouter.post("/attendance/check-in", checkIn);
 userRouter.post("/attendance/check-out", checkOut);
 userRouter.get("/attendance/my-history", getMyAttendance);

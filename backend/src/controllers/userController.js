@@ -5,9 +5,14 @@ import { pool } from "../config/database.js";
 export const getCurrentUser = async (req, res) => {
   try {
     // req.user đã có từ middleware, nhưng query lại để đảm bảo dữ liệu mới nhất
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
-      req.user.id,
-    ]);
+    const result = await pool.query(
+      "SELECT id, email, full_name, phone, role, avatar_url, is_active FROM users WHERE id = $1",
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
     const user = result.rows[0];
 
     if (user) delete user.password;
@@ -166,6 +171,43 @@ export const deleteUser = async (req, res) => {
     }
 
     res.status(200).json({ message: "Người dùng đã bị khóa" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Lấy mật khẩu cũ từ DB
+    const userRes = await pool.query(
+      "SELECT password FROM users WHERE id = $1",
+      [userId]
+    );
+    if (userRes.rows.length === 0)
+      return res.status(404).json({ message: "User not found" });
+
+    const user = userRes.rows[0];
+
+    // Kiểm tra pass cũ
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Mật khẩu hiện tại không đúng" });
+    }
+
+    // Hash pass mới
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update DB
+    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
+      hashedPassword,
+      userId,
+    ]);
+
+    res.json({ message: "Đổi mật khẩu thành công" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
