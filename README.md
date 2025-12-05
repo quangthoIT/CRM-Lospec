@@ -8,15 +8,15 @@ LOSPEC là giải pháp phần mềm quản lý bán hàng (POS) và quan hệ k
 
 #### Dashboard Tổng Quan
 
-![Dashboard](frontend\public\Dashboard.png)
+![Dashboard](frontend/public/Dashboard.png)
 
 #### Giao diện Sản phẩm
 
-![Products](frontend\public\Products.png)
+![Products](frontend/public/Products.png)
 
 #### Giao Diện Bán Hàng
 
-![POS](frontend\public\POS.png)
+![POS](frontend/public/POS.png)
 
 ---
 
