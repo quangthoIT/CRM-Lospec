@@ -9,6 +9,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -31,6 +40,14 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Pagination State
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalItems: 0,
+    totalPages: 1,
+  });
+
   // Delete states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -40,19 +57,40 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get("/products");
-      setProducts(data || []);
+      const { data } = await api.get("/products", {
+        params: {
+          page: pagination.page,
+          limit: pagination.limit,
+          search: search,
+          category: categoryFilter === "all" ? undefined : categoryFilter,
+        },
+      });
+
+      setProducts(data.data || []);
+      setPagination((prev) => ({
+        ...prev,
+        ...data.pagination,
+      }));
     } catch (error) {
-      console.error("Fetch error:", error);
-      toast.error("Không thể tải danh sách sản phẩm.");
+      console.error(error);
+      toast.error("Lỗi tải danh sách sản phẩm");
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination((prev) => ({ ...prev, page: newPage }));
+    }
+  };
+
   useEffect(() => {
-    fetchProducts();
-  }, [refreshTrigger]);
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [pagination.page, search, categoryFilter, refreshTrigger]);
 
   // --- Filter Logic ---
   const filteredProducts = products.filter((p) => {
@@ -70,6 +108,74 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
 
     return matchSearch && matchCategory && matchStatus;
   });
+
+  const renderPaginationItems = () => {
+    const { page, totalPages } = pagination;
+    const items = [];
+
+    // Luôn hiện trang 1
+    items.push(
+      <PaginationItem key={1}>
+        <PaginationLink
+          onClick={() => handlePageChange(1)}
+          isActive={page === 1}
+        >
+          1
+        </PaginationLink>
+      </PaginationItem>
+    );
+
+    // Logic hiển thị ...
+    if (page > 3) {
+      items.push(
+        <PaginationItem key="start-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+
+    // Các trang xung quanh trang hiện tại
+    for (
+      let i = Math.max(2, page - 1);
+      i <= Math.min(totalPages - 1, page + 1);
+      i++
+    ) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            onClick={() => handlePageChange(i)}
+            isActive={page === i}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    if (page < totalPages - 2) {
+      items.push(
+        <PaginationItem key="end-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+
+    // Luôn hiện trang cuối nếu > 1
+    if (totalPages > 1) {
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            onClick={() => handlePageChange(totalPages)}
+            isActive={page === totalPages}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    return items;
+  };
 
   // --- Delete Logic ---
   const confirmDelete = async () => {
@@ -279,6 +385,41 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {products.length > 0 && (
+        <div className="py-4 border-t border-slate-100">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  className={
+                    pagination.page <= 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+
+              {renderPaginationItems()}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  className={
+                    pagination.page >= pagination.totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          <div className="text-center text-xs text-slate-400 mt-2">
+            Hiển thị {products.length} / {pagination.totalItems} sản phẩm
+          </div>
+        </div>
       )}
 
       {/* --- Delete Dialog --- */}

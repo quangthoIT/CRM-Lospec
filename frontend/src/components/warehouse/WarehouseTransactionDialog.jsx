@@ -56,6 +56,8 @@ export function WarehouseTransactionDialog({
   // ✅ Sử dụng transactionNumber chung cho cả PO Number (Nhập) và Export Number (Xuất)
   const [transactionNumber, setTransactionNumber] = useState("");
 
+  const productList = Array.isArray(products) ? products : products?.data || [];
+
   const [loading, setLoading] = useState(false);
 
   // Reset form khi mở dialog
@@ -83,7 +85,7 @@ export function WarehouseTransactionDialog({
     if (!selectedProduct) return toast.error("Vui lòng chọn sản phẩm");
     if (quantity <= 0) return toast.error("Số lượng phải > 0");
 
-    const product = products.find((p) => p.id === selectedProduct);
+    const product = productList.find((p) => p.id === selectedProduct);
     if (!product) return;
 
     // Validate tồn kho (Chỉ áp dụng cho Export)
@@ -257,7 +259,7 @@ export function WarehouseTransactionDialog({
                 value={selectedProduct}
                 onValueChange={(val) => {
                   setSelectedProduct(val);
-                  const p = products.find((i) => i.id === val);
+                  const p = productList.find((i) => i.id === val);
                   // Import: Gợi ý giá vốn (cost). Export: Gợi ý giá bán (price)
                   if (p) setTempPrice(isImport ? p.cost || 0 : p.price || 0);
                 }}
@@ -266,7 +268,7 @@ export function WarehouseTransactionDialog({
                   <SelectValue placeholder="Tìm kiếm sản phẩm..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((p) => (
+                  {productList.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <div className="flex justify-between w-full gap-2">
                         <span>{p.name}</span>

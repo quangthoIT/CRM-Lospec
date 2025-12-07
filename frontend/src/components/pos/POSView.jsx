@@ -106,12 +106,17 @@ export function POSView() {
     setLoading(true);
     try {
       const [prodRes, custRes] = await Promise.all([
-        api.get("/products"),
+        api.get("/products?limit=1000"),
         api.get("/customers"),
       ]);
-      const validProducts = (prodRes.data || []).filter(
+      const rawProducts = Array.isArray(prodRes.data)
+        ? prodRes.data
+        : prodRes.data?.data || [];
+
+      const validProducts = rawProducts.filter(
         (p) => p.is_active && p.stock_quantity > 0
       );
+
       setProducts(validProducts);
       setCustomers(custRes.data || []);
     } catch (error) {
