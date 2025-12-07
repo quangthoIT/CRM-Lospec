@@ -128,3 +128,122 @@ export const getTopProducts = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const exportReport = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    // --- QUERY 1: TỔNG QUAN (OVERVIEW) ---
+    // Lấy tổng doanh thu, tổng đơn hàng
+    const summaryQuery = `
+      SELECT
+        COALESCE(SUM(o.total), 0) as total_revenue,
+        COUNT(o.id) as total_orders
+      FROM orders o
+      WHERE o.status = 'completed'
+        AND date(o.created_at) >= $1 AND date(o.created_at) <= $2
+    `;
+
+    // Lấy tổng số lượng sản phẩm bán ra
+    const productCountQuery = `
+      SELECT COALESCE(SUM(oi.quantity), 0) as total_sold
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status = 'completed'
+        AND date(o.created_at) >= $1 AND date(o.created_at) <= $2
+    `;
+
+    // --- QUERY 2: DOANH THU THEO NGÀY ---
+    const dailyQuery = `
+      SELECT
+        to_char(date(created_at), 'DD/MM/YYYY') as date,
+        COALESCE(SUM(total), 0) as revenue
+      FROM orders
+      WHERE status = 'completed'
+        AND date(created_at) >= $1 AND date(created_at) <= $2
+      GROUP BY date(created_at)
+      ORDER BY date(created_at) DESC
+    `;
+
+    // --- QUERY 3: TOP SẢN PHẨM BÁN CHẠY ---
+    const topProdQuery = `
+      SELECT
+        p.name as product_name,
+        SUM(oi.quantity) as sold_quantity,
+        SUM(oi.total) as revenue
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status = 'completed'
+        AND date(o.created_at) >= $1 AND date(o.created_at) <= $2
+      GROUP BY p.id, p.name
+      ORDER BY sold_quantity DESC
+      LIMIT 20
+    `;
+
+    // Chạy tất cả query song song để tối ưu tốc độ
+    const [summaryRes, prodCountRes, dailyRes, topProdRes] = await Promise.all([
+      pool.query(summaryQuery, [startDate, endDate]),
+      pool.query(productCountQuery, [startDate, endDate]),
+      pool.query(dailyQuery, [startDate, endDate]),
+      pool.query(topProdQuery, [startDate, endDate]),
+    ]);
+
+    // Xử lý số liệu tổng quan
+    const summary = summaryRes.rows[0];
+    const totalRevenue = Number(summary.total_revenue);
+    const totalOrders = Number(summary.total_orders);
+    const totalSold = Number(prodCountRes.rows[0].total_sold);
+    const avgOrderValue =
+      totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+    // --- TẠO NỘI DUNG CSV ---
+    // \uFEFF là BOM để Excel hiển thị đúng tiếng Việt
+    let csv = "\uFEFF";
+
+    // 1. Tiêu đề & Thời gian
+    csv += `BÁO CÁO CHI TIẾT DOANH THU\n`;
+    csv += `Từ ngày,${startDate},Đến ngày,${endDate}\n`;
+    csv += `Ngày xuất báo cáo,${new Date().toLocaleString("vi-VN")}\n\n`;
+
+    // 2. Phần Tổng Quan
+    csv += `TỔNG QUAN\n`;
+    csv += `Chỉ số,Giá trị\n`;
+    csv += `Tổng doanh thu,${totalRevenue}\n`;
+    csv += `Tổng đơn hàng,${totalOrders}\n`;
+    csv += `Tổng sản phẩm đã bán,${totalSold}\n`;
+    csv += `Giá trị đơn trung bình,${avgOrderValue}\n\n`;
+
+    // 3. Phần Doanh Thu Theo Ngày
+    csv += `DOANH THU THEO NGÀY\n`;
+    csv += `Ngày,Doanh thu (VNĐ)\n`;
+    dailyRes.rows.forEach((row) => {
+      csv += `${row.date},${row.revenue}\n`;
+    });
+    csv += `\n`;
+
+    // 4. Phần Top Sản Phẩm
+    csv += `TOP SẢN PHẨM BÁN CHẠY\n`;
+    csv += `Tên sản phẩm,Số lượng bán,Doanh thu\n`;
+    topProdRes.rows.forEach((row) => {
+      // Xử lý tên sản phẩm có dấu phẩy để không bị lỗi cột CSV
+      const safeName = row.product_name.includes(",")
+        ? `"${row.product_name}"`
+        : row.product_name;
+      csv += `${safeName},${row.sold_quantity},${row.revenue}\n`;
+    });
+
+    // Gửi file về client
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=BaoCao_ChiTiet_${startDate}_${endDate}.csv`
+    );
+    res.status(200).send(csv);
+  } catch (error) {
+    console.error("Export Detailed Error:", error);
+    res
+      .status(500)
+      .json({ message: "Lỗi xuất báo cáo chi tiết: " + error.message });
+  }
+};

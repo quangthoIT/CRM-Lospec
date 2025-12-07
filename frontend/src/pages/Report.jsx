@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../config/api";
-import { Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Import các components con đã tách
@@ -8,12 +8,14 @@ import { ReportFilter } from "../components/report/ReportFilter";
 import { ReportStatsCards } from "../components/report/ReportStatsCards";
 import { RevenueChart } from "../components/report/RevenueChart";
 import { TopProductsList } from "../components/report/TopProductsList";
+import { Button } from "@/components/ui/button";
 
 export default function ReportPage() {
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   // States cho bộ lọc thời gian
   const [filterType, setFilterType] = useState("7days");
@@ -49,6 +51,38 @@ export default function ReportPage() {
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+
+      // Gọi API với responseType là blob để nhận file
+      const response = await api.get(`/reports/export${queryParams}`, {
+        responseType: "blob",
+      });
+
+      // Tạo link ảo để tải xuống
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      // Đặt tên file
+      link.setAttribute(
+        "download",
+        `BaoCao_${dateRange.startDate}_${dateRange.endDate}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      toast.success("Đã xuất báo cáo thành công!");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Lỗi khi xuất báo cáo");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading && !stats) {
     return (
       <div className="h-[calc(100vh-80px)] flex items-center justify-center">
@@ -74,13 +108,24 @@ export default function ReportPage() {
 
         {/* Component Bộ Lọc */}
 
-        <ReportFilter
-          filterType={filterType}
-          setFilterType={setFilterType}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          onRefresh={fetchAllData}
-        />
+        <div className="flex gap-2">
+          <ReportFilter
+            filterType={filterType}
+            setFilterType={setFilterType}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            onRefresh={fetchAllData}
+          />
+
+          <Button variant="default" onClick={handleExport} disabled={exporting}>
+            {exporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            Xuất Excel (CSV)
+          </Button>
+        </div>
       </div>
 
       {/* 1. THỐNG KÊ TỔNG QUAN */}
