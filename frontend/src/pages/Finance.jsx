@@ -9,9 +9,11 @@ import { FinanceTable } from "../components/finance/FinanceTable";
 import { ExpenseFormDialog } from "../components/finance/ExpenseFormDialog";
 import { toast } from "sonner";
 import { FinanceStatsCards } from "@/components/finance/FinanceStatsCards";
+import { FinanceLineChart } from "../components/finance/FinanceLineChart";
 
 export default function FinancePage() {
   const [transactions, setTransactions] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -34,12 +36,15 @@ export default function FinancePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [expenseRes, orderRes] = await Promise.all([
+      const [expenseRes, orderRes, chartRes] = await Promise.all([
         api.get(`/finances/expenses?startDate=${startDate}&endDate=${endDate}`),
         api.get(
           `/orders?status=completed&startDate=${startDate}&endDate=${endDate}`
         ),
+        api.get(`/finances/chart?startDate=${startDate}&endDate=${endDate}`),
       ]);
+
+      setChartData(chartRes.data || []);
 
       const expenseList = (expenseRes.data || []).map((e) => ({
         uniqueId: `exp-${e.id}`,
@@ -53,7 +58,6 @@ export default function FinancePage() {
         payment_method: e.payment_method,
         created_by: e.created_by,
         created_at: e.created_at,
-        // Giữ nguyên data gốc để tiện bind vào form sửa
         expense_date: e.expense_date,
         notes: e.notes,
       }));
@@ -155,14 +159,14 @@ export default function FinancePage() {
 
       {/* Stats Cards */}
       <FinanceStatsCards stats={stats} formatCurrency={formatCurrency} />
-
+      <FinanceLineChart data={chartData} loading={loading} />
       {/* Main Content */}
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="mt-4 space-y-2"
       >
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mt-4">
           <TabsList>
             <TabsTrigger
               value="all"
