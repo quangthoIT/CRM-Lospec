@@ -61,6 +61,9 @@ export function POSView() {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountType, setDiscountType] = useState("percent");
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [checkingPromo, setCheckingPromo] = useState(false);
 
   // Customer Dialog State
   const [showCustomerForm, setShowCustomerForm] = useState(false);
@@ -196,6 +199,9 @@ export function POSView() {
     setDiscountPercent(0);
     setReceivedAmount(0);
     setPaymentMethod("cash");
+    setPromoCode("");
+    setAppliedPromo(null);
+    setDiscountType("percent");
   };
 
   // --- TÍNH TOÁN TIỀN ---
@@ -205,10 +211,15 @@ export function POSView() {
   );
 
   // Tính giá trị giảm giá thực tế
+  // Tính giá trị giảm giá thực tế dựa trên loại
   const calculatedDiscount =
     discountType === "percent"
       ? (subtotal * discountPercent) / 100
-      : discountAmount;
+      : discountType === "amount"
+      ? discountAmount
+      : appliedPromo
+      ? appliedPromo.discountAmount
+      : 0;
 
   // Tính thuế 10%
   const taxRate = settings.tax_rate / 100;
@@ -225,6 +236,40 @@ export function POSView() {
       style: "currency",
       currency: "VND",
     }).format(value || 0);
+
+  // --- HÀM XỬ LÝ MÃ GIẢM GIÁ ---
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      toast.error("Vui lòng nhập mã giảm giá");
+      return;
+    }
+
+    setCheckingPromo(true);
+    try {
+      const { data } = await api.post("/promotions/validate", {
+        code: promoCode.trim(),
+        orderTotal: subtotal,
+      });
+
+      if (data.valid) {
+        setAppliedPromo(data);
+        setDiscountType("promo");
+        toast.success(data.message || "Áp dụng mã thành công!");
+      }
+    } catch (error) {
+      console.error("Promo validation error:", error);
+      toast.error(error.response?.data?.message || "Mã không hợp lệ");
+    } finally {
+      setCheckingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode("");
+    setDiscountType("percent");
+    toast.info("Đã xóa mã giảm giá");
+  };
 
   // --- HÀM IN HÓA ĐƠN ---
   const handlePrintReceipt = () => {
@@ -259,6 +304,7 @@ export function POSView() {
         })),
         discount: calculatedDiscount,
         payment_method: paymentMethod,
+        promotion_code: appliedPromo?.code || null,
         notes: `Bán tại quầy`,
       };
 
@@ -518,51 +564,116 @@ export function POSView() {
             </div>
 
             <span className="text-gray-600 shrink-0">Giảm giá:</span>
-            <div className="flex items-center justify-between text-sm gap-2 mt-1">
-              {/* Toggle % / VNĐ */}
-              <div className="flex items-center gap-3 shrink-0">
-                <Button
-                  size="sm"
-                  variant={discountType === "percent" ? "default" : "outline"}
-                  className="h-7 w-8 px-0 text-xs"
-                  onClick={() => setDiscountType("percent")}
-                >
-                  %
-                </Button>
-                <Button
-                  size="sm"
-                  variant={discountType === "amount" ? "default" : "outline"}
-                  className="h-7 px-2 text-xs"
-                  onClick={() => setDiscountType("amount")}
-                >
-                  VNĐ
-                </Button>
+            {/* Tabs cho loại giảm giá */}
+            <div className="flex items-center gap-2 mt-1">
+              <Button
+                size="sm"
+                variant={discountType === "percent" ? "default" : "outline"}
+                className="h-7 px-2 text-xs flex-1"
+                onClick={() => {
+                  setDiscountType("percent");
+                  setAppliedPromo(null);
+                }}
+              >
+                %
+              </Button>
+              <Button
+                size="sm"
+                variant={discountType === "amount" ? "default" : "outline"}
+                className="h-7 px-2 text-xs flex-1"
+                onClick={() => {
+                  setDiscountType("amount");
+                  setAppliedPromo(null);
+                }}
+              >
+                VNĐ
+              </Button>
+              <Button
+                size="sm"
+                variant={discountType === "promo" ? "default" : "outline"}
+                className="h-7 px-2 text-xs flex-1"
+                onClick={() => setDiscountType("promo")}
+              >
+                Mã
+              </Button>
+            </div>
 
-                {/* Input */}
+            {/* Input theo loại */}
+            {discountType === "percent" && (
+              <Input
+                type="number"
+                className="h-8 text-center text-sm mt-2"
+                value={discountPercent}
+                onChange={(e) => {
+                  const val = Math.max(0, Number(e.target.value));
+                  setDiscountPercent(Math.min(100, val));
+                }}
+                placeholder="Nhập %"
+                min="0"
+                max="100"
+              />
+            )}
+
+            {discountType === "amount" && (
+              <Input
+                type="number"
+                className="h-8 text-center text-sm mt-2"
+                value={discountAmount}
+                onChange={(e) => {
+                  const val = Math.max(0, Number(e.target.value));
+                  setDiscountAmount(Math.min(subtotal, val));
+                }}
+                placeholder="Nhập số tiền"
+                min="0"
+                max={subtotal}
+              />
+            )}
+
+            {discountType === "promo" && (
+              <div className="flex gap-2 mt-4">
                 <Input
-                  type="number"
-                  className="h-7 text-center text-sm w-full"
-                  value={
-                    discountType === "percent"
-                      ? discountPercent
-                      : discountAmount
-                  }
-                  onChange={(e) => {
-                    const val = Math.max(0, Number(e.target.value));
-                    if (discountType === "percent") {
-                      setDiscountPercent(Math.min(100, val));
-                    } else {
-                      setDiscountAmount(Math.min(subtotal, val));
-                    }
+                  className="h-8 text-sm flex-1"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="Nhập mã giảm giá"
+                  disabled={appliedPromo !== null}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") handleApplyPromo();
                   }}
-                  placeholder="0"
-                  min="0"
-                  max={discountType === "percent" ? "100" : subtotal}
                 />
+                {appliedPromo ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3"
+                    onClick={handleRemovePromo}
+                  >
+                    Xóa
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={handleApplyPromo}
+                    disabled={checkingPromo || !promoCode.trim()}
+                  >
+                    {checkingPromo ? "..." : "Áp dụng"}
+                  </Button>
+                )}
               </div>
+            )}
 
-              {/* Tiền giảm */}
-              <span className="text-sm font-medium text-rose-600">
+            {/* Hiển thị thông tin mã đã áp dụng */}
+            {appliedPromo && (
+              <div className="text-xs text-emerald-600 mt-1 font-medium">
+                ✓ Đã áp dụng: {appliedPromo.code}
+              </div>
+            )}
+
+            {/* Hiển thị số tiền giảm */}
+            <div className="flex justify-between text-sm mt-2">
+              <span className="text-gray-600">Số tiền giảm:</span>
+              <span className="font-medium text-rose-600">
                 -{formatCurrency(calculatedDiscount)}
               </span>
             </div>
