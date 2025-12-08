@@ -46,16 +46,16 @@ export const getDashboardStats = async (req, res) => {
     let periodStats = { revenue: 0, orders: 0, profit: 0 };
     if (startDate && endDate) {
       const periodQuery = `
-            SELECT
-                COALESCE(SUM(total), 0) as revenue,
-                COUNT(id) as orders,
-                COALESCE(SUM(total - (subtotal * 0.7)), 0) as profit
-            FROM orders
-            WHERE
-                status = 'completed'
-                AND date(created_at) >= $1
-                AND date(created_at) <= $2
-        `;
+        SELECT
+          COALESCE(SUM(total), 0) as revenue,
+          COUNT(id) as orders,
+          COALESCE(SUM(total * 0.3), 0) as profit
+        FROM orders
+        WHERE
+          status = 'completed'
+          AND date(created_at) >= $1
+          AND date(created_at) <= $2
+      `;
       const periodRes = await pool.query(periodQuery, [startDate, endDate]);
       periodStats = {
         revenue: Number(periodRes.rows[0].revenue),
@@ -82,59 +82,125 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
-// 2. Dữ liệu biểu đồ (Cập nhật theo khoảng thời gian)
+// 2. Dữ liệu biểu đồ (Hỗ trợ cả days và startDate/endDate)
 export const getRevenueChart = async (req, res) => {
   try {
-    const { days = 7 } = req.query; // Default 7 ngày nếu không có startDate/endDate
+    const { startDate, endDate, days } = req.query;
 
-    let query = `
-      SELECT
-        to_char(date_series, 'DD/MM') as name,
-        COALESCE(SUM(o.total), 0) as revenue,
-        COUNT(o.id) as total_orders
-      FROM generate_series(
-        (NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date - ($1 || ' days')::interval,
-        (NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,
-        '1 day'
-      ) as date_series
-      LEFT JOIN orders o ON date(o.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Ho_Chi_Minh') = date_series
-        AND o.status = 'completed'
-      GROUP BY date_series
-      ORDER BY date_series ASC
-    `;
+    let query, params;
 
-    const result = await pool.query(query, [Number(days) - 1]); // Trừ 1 để tính cả hôm nay
+    // Nếu có startDate và endDate thì ưu tiên dùng
+    if (startDate && endDate) {
+      query = `
+        SELECT
+          to_char(date_series, 'DD/MM') as name,
+          COALESCE(SUM(o.total), 0) as revenue,
+          COUNT(o.id) as total_orders
+        FROM generate_series(
+          $1::date,
+          $2::date,
+          '1 day'
+        ) as date_series
+        LEFT JOIN orders o ON date(o.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Ho_Chi_Minh') = date_series
+          AND o.status = 'completed'
+        GROUP BY date_series
+        ORDER BY date_series ASC
+      `;
+      params = [startDate, endDate];
+    } else {
+      // Fallback về days nếu không có startDate/endDate
+      const daysCount = days ? Number(days) : 7;
+      query = `
+        SELECT
+          to_char(date_series, 'DD/MM') as name,
+          COALESCE(SUM(o.total), 0) as revenue,
+          COUNT(o.id) as total_orders
+        FROM generate_series(
+          (NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date - ($1 || ' days')::interval,
+          (NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,
+          '1 day'
+        ) as date_series
+        LEFT JOIN orders o ON date(o.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Ho_Chi_Minh') = date_series
+          AND o.status = 'completed'
+        GROUP BY date_series
+        ORDER BY date_series ASC
+      `;
+      params = [daysCount - 1];
+    }
+
+    const result = await pool.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error("Revenue Chart Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-// 3. Top sản phẩm (Giữ nguyên hoặc cập nhật timezone tương tự)
+// 3. Top sản phẩm (Cập nhật để hỗ trợ filter theo thời gian)
 export const getTopProducts = async (req, res) => {
   try {
-    const result = await pool.query(`
-        SELECT p.id, p.name, p.sku, SUM(oi.quantity) as sold_quantity, SUM(oi.total) as revenue
+    const { startDate, endDate, limit = 5 } = req.query;
+
+    let query, params;
+
+    if (startDate && endDate) {
+      // Có filter thời gian
+      query = `
+        SELECT
+          p.id,
+          p.name,
+          p.sku,
+          SUM(oi.quantity) as sold_quantity,
+          SUM(oi.total) as revenue
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.status = 'completed'
+          AND date(o.created_at) >= $1
+          AND date(o.created_at) <= $2
+        GROUP BY p.id, p.name, p.sku
+        ORDER BY sold_quantity DESC
+        LIMIT $3
+      `;
+      params = [startDate, endDate, limit];
+    } else {
+      // Không có filter - lấy all time
+      query = `
+        SELECT
+          p.id,
+          p.name,
+          p.sku,
+          SUM(oi.quantity) as sold_quantity,
+          SUM(oi.total) as revenue
         FROM order_items oi
         JOIN products p ON oi.product_id = p.id
         JOIN orders o ON oi.order_id = o.id
         WHERE o.status = 'completed'
         GROUP BY p.id, p.name, p.sku
         ORDER BY sold_quantity DESC
-        LIMIT 5
-    `);
+        LIMIT $1
+      `;
+      params = [limit];
+    }
+
+    const result = await pool.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error("Top Products Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
+// 4. Export Report (Giữ nguyên - đã đúng)
 export const exportReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: "Thiếu startDate hoặc endDate" });
+    }
+
     // --- QUERY 1: TỔNG QUAN (OVERVIEW) ---
-    // Lấy tổng doanh thu, tổng đơn hàng
     const summaryQuery = `
       SELECT
         COALESCE(SUM(o.total), 0) as total_revenue,
@@ -144,7 +210,6 @@ export const exportReport = async (req, res) => {
         AND date(o.created_at) >= $1 AND date(o.created_at) <= $2
     `;
 
-    // Lấy tổng số lượng sản phẩm bán ra
     const productCountQuery = `
       SELECT COALESCE(SUM(oi.quantity), 0) as total_sold
       FROM order_items oi
@@ -181,7 +246,6 @@ export const exportReport = async (req, res) => {
       LIMIT 20
     `;
 
-    // Chạy tất cả query song song để tối ưu tốc độ
     const [summaryRes, prodCountRes, dailyRes, topProdRes] = await Promise.all([
       pool.query(summaryQuery, [startDate, endDate]),
       pool.query(productCountQuery, [startDate, endDate]),
@@ -189,7 +253,6 @@ export const exportReport = async (req, res) => {
       pool.query(topProdQuery, [startDate, endDate]),
     ]);
 
-    // Xử lý số liệu tổng quan
     const summary = summaryRes.rows[0];
     const totalRevenue = Number(summary.total_revenue);
     const totalOrders = Number(summary.total_orders);
@@ -198,15 +261,12 @@ export const exportReport = async (req, res) => {
       totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
     // --- TẠO NỘI DUNG CSV ---
-    // \uFEFF là BOM để Excel hiển thị đúng tiếng Việt
     let csv = "\uFEFF";
 
-    // 1. Tiêu đề & Thời gian
     csv += `BÁO CÁO CHI TIẾT DOANH THU\n`;
     csv += `Từ ngày,${startDate},Đến ngày,${endDate}\n`;
     csv += `Ngày xuất báo cáo,${new Date().toLocaleString("vi-VN")}\n\n`;
 
-    // 2. Phần Tổng Quan
     csv += `TỔNG QUAN\n`;
     csv += `Chỉ số,Giá trị\n`;
     csv += `Tổng doanh thu,${totalRevenue}\n`;
@@ -214,7 +274,6 @@ export const exportReport = async (req, res) => {
     csv += `Tổng sản phẩm đã bán,${totalSold}\n`;
     csv += `Giá trị đơn trung bình,${avgOrderValue}\n\n`;
 
-    // 3. Phần Doanh Thu Theo Ngày
     csv += `DOANH THU THEO NGÀY\n`;
     csv += `Ngày,Doanh thu (VNĐ)\n`;
     dailyRes.rows.forEach((row) => {
@@ -222,18 +281,15 @@ export const exportReport = async (req, res) => {
     });
     csv += `\n`;
 
-    // 4. Phần Top Sản Phẩm
     csv += `TOP SẢN PHẨM BÁN CHẠY\n`;
     csv += `Tên sản phẩm,Số lượng bán,Doanh thu\n`;
     topProdRes.rows.forEach((row) => {
-      // Xử lý tên sản phẩm có dấu phẩy để không bị lỗi cột CSV
       const safeName = row.product_name.includes(",")
         ? `"${row.product_name}"`
         : row.product_name;
       csv += `${safeName},${row.sold_quantity},${row.revenue}\n`;
     });
 
-    // Gửi file về client
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader(
       "Content-Disposition",

@@ -20,7 +20,8 @@ import { AlertTriangle, AlertCircle, CheckCircle, Package } from "lucide-react";
 import { toast } from "sonner";
 
 export function StockAlertsView() {
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [alertProducts, setAlertProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,18 +31,30 @@ export function StockAlertsView() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get("/products");
-      setProducts(data || []);
+      // Lấy cả 2: tất cả sản phẩm + sản phẩm cảnh báo
+      const [allRes, alertRes] = await Promise.all([
+        api.get("/products"),
+        api.get("/warehouse/alerts"),
+      ]);
+
+      setAllProducts(Array.isArray(allRes.data) ? allRes.data : []);
+      setAlertProducts(Array.isArray(alertRes.data) ? alertRes.data : []);
+
+      console.log("📦 All Products:", allRes.data);
+      console.log("⚠️ Alert Products:", alertRes.data);
     } catch (error) {
       console.error("Error:", error);
       toast.error("Lỗi khi tải dữ liệu tồn kho");
+      setAllProducts([]);
+      setAlertProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
   const getAlertLevel = (quantity, minStock) => {
-    const threshold = minStock !== null ? minStock : 10;
+    const threshold =
+      minStock !== null && minStock !== undefined ? minStock : 10;
     if (quantity === 0)
       return {
         level: "critical",
@@ -64,12 +77,9 @@ export function StockAlertsView() {
     };
   };
 
-  const alertItems = products.filter((p) => {
-    const threshold = p.min_stock !== null ? p.min_stock : 10;
-    return (p.stock_quantity || 0) <= threshold;
-  });
-
-  const criticalItems = alertItems.filter((p) => (p.stock_quantity || 0) === 0);
+  const criticalItems = alertProducts.filter(
+    (p) => (p.stock_quantity || 0) === 0
+  );
 
   return (
     <div className="space-y-6">
@@ -78,7 +88,7 @@ export function StockAlertsView() {
           <div>
             <p className="text-sm text-gray-900 font-medium">Tổng sản phẩm</p>
             <p className="text-3xl font-bold text-gray-900">
-              {products.length}
+              {allProducts.length}
             </p>
           </div>
           <div className="p-3 bg-gray-200 rounded-full">
@@ -90,7 +100,7 @@ export function StockAlertsView() {
           <div>
             <p className="text-sm text-yellow-700 font-medium">Cần nhập hàng</p>
             <p className="text-3xl font-bold text-yellow-700">
-              {alertItems.length}
+              {alertProducts.length}
             </p>
           </div>
           <div className="p-3 bg-yellow-200 rounded-full">
@@ -120,7 +130,7 @@ export function StockAlertsView() {
           <div className="p-8 text-center text-gray-600">
             Đang tải dữ liệu...
           </div>
-        ) : alertItems.length === 0 ? (
+        ) : alertProducts.length === 0 ? (
           <div className="p-8 text-center flex flex-col items-center">
             <div className="p-4 bg-emerald-100 rounded-full mb-3">
               <CheckCircle className="h-12 w-12 text-emerald-600" />
@@ -128,6 +138,9 @@ export function StockAlertsView() {
             <h3 className="text-xl font-medium text-emerald-600">
               Kho hàng ổn định
             </h3>
+            <p className="text-sm text-gray-500 mt-2">
+              Tổng {allProducts.length} sản phẩm - Không có cảnh báo tồn kho
+            </p>
           </div>
         ) : (
           <CardContent>
@@ -143,7 +156,7 @@ export function StockAlertsView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {alertItems.map((p) => {
+                {alertProducts.map((p) => {
                   const minStock = p.min_stock || 10;
                   const alert = getAlertLevel(p.stock_quantity, minStock);
                   const Icon = alert.icon;
@@ -159,7 +172,7 @@ export function StockAlertsView() {
                       </TableCell>
                       <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell className="text-center text-emerald-600 font-medium">
-                        {p.stock_quantity}
+                        {p.stock_quantity || 0}
                       </TableCell>
                       <TableCell className="text-center text-gray-600">
                         {minStock}

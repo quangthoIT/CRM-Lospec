@@ -174,22 +174,26 @@ export const printReceipt = ({
         ${
           paymentInfo.method === "cash" && paymentInfo.receivedAmount
             ? `
-          <div class="item" style="margin-top: 5px;">
-            <span>Khách đưa:</span>
-            <span>${formatCurrency(paymentInfo.receivedAmount)}</span>
-          </div>
-          <div class="item">
-            <span>Tiền thừa:</span>
-            <span>${formatCurrency(paymentInfo.changeAmount || 0)}</span>
-          </div>
-        `
+  <div class="item" style="margin-top: 5px;">
+    <span>Khách đưa:</span>
+    <span>${formatCurrency(paymentInfo.receivedAmount)}</span>
+  </div>
+  <div class="item">
+    <span>Tiền thừa:</span>
+    <span>${formatCurrency(paymentInfo.changeAmount || 0)}</span>
+  </div>
+`
             : `
-          <div class="item" style="margin-top: 5px;">
-            <span>Thanh toán:</span>
-            <span>${getPaymentMethodText(order.payment_method)}</span>
-          </div>
-        `
+  <div class="item" style="margin-top: 5px;">
+    <span>Thanh toán:</span>
+    <span>${getPaymentMethodText(
+      paymentInfo.method || order.payment_method
+    )}</span>
+  </div>
+`
         }
+
+
 
         <div class="line"></div>
 
