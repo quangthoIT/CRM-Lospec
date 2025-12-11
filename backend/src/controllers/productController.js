@@ -4,7 +4,7 @@ import { pool } from "../config/database.js";
 export const getAllProducts = async (req, res) => {
   try {
     // Lấy tham số từ query string, mặc định page = 1, limit = 10
-    const { search, category, status, page = 1, limit = 10 } = req.query;
+    const { search, category, status, page = 1, limit = 1000 } = req.query;
 
     const offset = (page - 1) * limit;
 
