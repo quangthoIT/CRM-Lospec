@@ -106,25 +106,26 @@ export function ProductFormDialog({ open, onOpenChange, product, onSuccess }) {
   };
 
   const categories = [
-    "Đồ uống",
-    "Bánh kẹo",
-    "Mì ăn liền",
-    "Bánh mỳ",
-    "Sản phẩm từ sữa",
-    "Thực phẩm đông lạnh",
-    "Thực phẩm đóng hộp",
-    "Đồ gia dụng",
-    "Chăm sóc cá nhân",
+    "Đồ uống", // Trà, Cà phê, Rượu (Sim, Cần...)
+    "Thực phẩm khô", // Thịt trâu gác bếp, Khô gà, Tôm khô, Hạt điều
+    "Bánh kẹo", // Bánh pía, Kẹo dừa, Mè xửng, Bánh đậu xanh
+    "Gia vị", // Nước mắm, Muối tôm, Tiêu, Tỏi Lý Sơn, Mắm nêm
+    "Thực phẩm tươi", // Nem chua, Chả mực, Cốm tươi
+    "Thủ công mỹ nghệ", // Gốm sứ, Lụa tơ tằm, Mây tre đan
+    "Sức khỏe & Quà tặng", // Yến sào, Mật ong, Nấm linh chi
   ];
 
   const units = [
     { value: "piece", label: "Cái" },
-    { value: "kg", label: "Kg" },
-    { value: "liter", label: "Lít" },
-    { value: "box", label: "Hộp" },
-    { value: "bottle", label: "Chai" },
     { value: "pack", label: "Gói" },
     { value: "bag", label: "Túi" },
+    { value: "box", label: "Hộp" },
+    { value: "bottle", label: "Chai" },
+    { value: "jar", label: "Hũ" },
+    { value: "can", label: "Lon" },
+    { value: "kg", label: "Kg" },
+    { value: "gram", label: "Gram" },
+    { value: "liter", label: "Lít" },
   ];
 
   return (
@@ -154,7 +155,7 @@ export function ProductFormDialog({ open, onOpenChange, product, onSuccess }) {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                placeholder="VD: Coca Cola 330ml"
+                placeholder="VD: Cà phê"
               />
             </div>
 
@@ -169,7 +170,7 @@ export function ProductFormDialog({ open, onOpenChange, product, onSuccess }) {
                 onChange={(e) =>
                   setFormData({ ...formData, sku: e.target.value })
                 }
-                placeholder="VD: COCA-330"
+                placeholder="VD: CAFE-001"
               />
             </div>
           </div>

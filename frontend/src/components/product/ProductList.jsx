@@ -194,25 +194,26 @@ export function ProductList({ onEdit, refreshTrigger, onAddClick }) {
   };
 
   const categories = [
-    "Đồ uống",
-    "Bánh kẹo",
-    "Mì ăn liền",
-    "Bánh mỳ",
-    "Sản phẩm từ sữa",
-    "Thực phẩm đông lạnh",
-    "Thực phẩm đóng hộp",
-    "Đồ gia dụng",
-    "Chăm sóc cá nhân",
+    "Đồ uống", // Trà, Cà phê, Rượu (Sim, Cần...)
+    "Thực phẩm khô", // Thịt trâu gác bếp, Khô gà, Tôm khô, Hạt điều
+    "Bánh kẹo", // Bánh pía, Kẹo dừa, Mè xửng, Bánh đậu xanh
+    "Gia vị", // Nước mắm, Muối tôm, Tiêu, Tỏi Lý Sơn, Mắm nêm
+    "Thực phẩm tươi", // Nem chua, Chả mực, Cốm tươi
+    "Thủ công mỹ nghệ", // Gốm sứ, Lụa tơ tằm, Mây tre đan
+    "Sức khỏe & Quà tặng", // Yến sào, Mật ong, Nấm linh chi
   ];
 
   const unitLabels = {
     piece: "Cái",
-    pack: "Gói",
+    pack: "Gói", // Chè, kẹo
+    bag: "Túi", // Tỏi, gạo
+    box: "Hộp", // Bánh đậu xanh, hạt điều
+    bottle: "Chai", // Nước mắm, rượu, mật ong
+    jar: "Hũ", // Mắm tôm, chao, các loại sốt đặc
+    can: "Lon", // Các loại đồ hộp hoặc bia đặc sản
     kg: "Kg",
+    gram: "Gram",
     liter: "Lít",
-    box: "Hộp",
-    bottle: "Chai",
-    bag: "Túi",
   };
 
   const formatCurrency = (val) =>
