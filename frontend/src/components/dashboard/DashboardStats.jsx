@@ -66,7 +66,7 @@ export function DashboardStats({ stats }) {
           <div className="text-2xl font-bold text-gray-900">
             +{stats?.newCustomers}
           </div>
-          <p className="text-xs text-gray-600 mt-1">Trong tháng này</p>
+          <p className="text-xs text-gray-600 mt-1">Trong ngày hôm nay</p>
         </CardContent>
       </Card>
 
